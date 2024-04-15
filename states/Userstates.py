@@ -8,3 +8,18 @@ class PersonalInfo(StatesGroup):
     phonenumber = State()
     supervisorname = State()
     confirmation = State()
+
+
+class SendIMEI(StatesGroup):
+    phonemodel = State()
+    IMEI = State()
+    sticker = State()
+    confirmation = State()
+
+
+class Add(StatesGroup):
+    add = State()
+
+
+class Sticker(StatesGroup):
+    ask = State()

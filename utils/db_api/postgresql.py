@@ -90,3 +90,55 @@ class Database:
 
     async def drop_users(self):
         await self.execute("DROP TABLE Users", execute=True)
+
+
+
+
+
+    async def create_table_imei(self):
+        sql = """
+        CREATE TABLE IF NOT EXISTS IMEI (
+        id SERIAL PRIMARY KEY,
+        model VARCHAR(255) NOT NULL,
+        imei VARCHAR(255) NOT NULL UNIQUE,
+        sticker VARCHAR(255) NOT NULL,
+        now_date VARCHAR(255) NOT NULL,
+        telegram_id BIGINT NOT NULL
+        );
+        """
+        await self.execute(sql, execute=True)
+
+    @staticmethod
+    def format_args(sql, parameters: dict):
+        sql += " AND ".join([
+            f"{item} = ${num}" for num, item in enumerate(parameters.keys(),
+                                                          start=1)
+        ])
+        return sql, tuple(parameters.values())
+
+    async def add_imei(self, model, imei, sticker, now_date, telegram_id):
+        sql = "INSERT INTO IMEI(model, imei, sticker, now_date, telegram_id) VALUES($1, $2, $3, $4, $5) returning *"
+        return await self.execute(sql, model, imei, sticker, now_date, telegram_id, fetchrow=True)
+
+
+    async def select_all_imei(self):
+        sql = "SELECT * FROM IMEI"
+        return await self.execute(sql, fetch=True)
+
+
+    async def select_imei(self, **kwargs):
+        sql = "SELECT * FROM IMEI WHERE "
+        sql, parameters = self.format_args(sql, parameters=kwargs)
+        return await self.execute(sql, *parameters, fetchrow=True)
+
+
+    async def count_imei(self):
+        sql = "SELECT COUNT(*) FROM IMEI"
+        return await self.execute(sql, fetchval=True)
+
+
+    async def delete_imei(self):
+        await self.execute("DELETE FROM IMEI WHERE TRUE", execute=True)
+
+    async def drop_imei(self):
+        await self.execute("DROP TABLE IMEI", execute=True)

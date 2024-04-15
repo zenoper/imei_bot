@@ -2,7 +2,7 @@ import asyncpg.exceptions
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from loader import dp, db, bot
-from states.Userstates import PersonalInfo
+from states.Userstates import PersonalInfo, Add
 from keyboards.default import UserKeyboard
 from aiogram.types import ReplyKeyboardRemove
 from data.config import ADMINS
@@ -66,16 +66,6 @@ async def shopname(message: types.Message, state: FSMContext):
         await message.answer("Iltimos, shop (do'kon) nomini <b>to'liq</b> kiriting!")
     else:
         await state.update_data({"shopname": shopname})
-
-        data = await state.get_data()
-        full_name = data.get("fullname")
-        retailer = data.get("retailername")
-        shop = data.get("shopname")
-
-        msg = "Iltimos, shaxsiy ma'lumotingiz to'g'riligini tasdiqlang!"
-        msg += f"To'liq ism - <b>{full_name}</b> \n\n"
-        msg += f"Retailer - <b>{retailer}</b> \n\n"
-        msg += f"Shop (do'kon) - <b>{shop}</b> \n\n"
 
         await message.answer("Iltimos, telefon raqamingizni kiriting!", reply_markup=UserKeyboard.phone_number)
         await PersonalInfo.phonenumber.set()
@@ -164,8 +154,8 @@ async def confirmation(message: types.Message, state: FSMContext):
     msg = f"User '{user[1]}' has been added to the database! We now have {count} users."
     await bot.send_message(chat_id=ADMINS[0], text=msg)
 
-    await message.answer("Rahmat, endi botdan foydalanishingiz mumkin 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
-    await state.finish()
+    await message.answer("Rahmat, endi botdan foydalanishingiz mumkin 🙂 \n\n/add_imei orqali IMEI qo'sha olasiz!", reply_markup=ReplyKeyboardRemove(selective=True))
+    await Add.add.set()
 
 
 @dp.message_handler(text="Tahrirlash ✏️", content_types=types.ContentTypes.TEXT, state=PersonalInfo.confirmation)
