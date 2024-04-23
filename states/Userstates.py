@@ -11,6 +11,7 @@ class PersonalInfo(StatesGroup):
 
 
 class SendIMEI(StatesGroup):
+    photo = State()
     phonemodel = State()
     IMEI = State()
     sticker = State()

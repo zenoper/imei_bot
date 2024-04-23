@@ -9,11 +9,28 @@ from aiogram.types import ReplyKeyboardRemove
 from data.config import ADMINS
 from datetime import datetime, date
 
+import os
+import easyocr
+from io import BytesIO
+
+reader = easyocr.Reader(['en'])
+
+DOWNLOAD_DIRECTORY = '/Users/bez/Desktop/IMEI bot2/utils/photos/'
+
 
 @dp.message_handler(Command(["add_imei"]), state=Add.add)
 async def add(message: types.Message):
     await message.answer("Telefon modelini kiriting...\n\n(Model nomi, RAM, ROM)", reply_markup=types.ReplyKeyboardRemove())
-    await SendIMEI.phonemodel.set()
+    await SendIMEI.photo.set()
+
+
+@dp.message_handler(state=SendIMEI.photo, content_types=types.ContentTypes.PHOTO)
+async def add(message: types.Message):
+    # Perform OCR on the preprocessed image
+    file_path = os.path.join(DOWNLOAD_DIRECTORY, "bruuh.jpg")
+    await message.photo[-1].download(destination_file=file_path)
+    result = reader.readtext(file_path, detail=0, paragraph=True)
+    await message.answer(result)
 
 
 @dp.message_handler(state=SendIMEI.phonemodel, content_types=types.ContentTypes.TEXT)
