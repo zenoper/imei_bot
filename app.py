@@ -10,7 +10,7 @@ async def on_startup(dispatcher):
     await db.create()
     # await db.drop_users()
     # await db.drop_imei()
-    await db.create_table_users()
+    await db.create_table_vba()
     await db.create_table_imei()
 
     await set_default_commands(dispatcher)

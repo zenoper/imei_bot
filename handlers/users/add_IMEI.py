@@ -3,7 +3,7 @@ import asyncpg.exceptions
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from loader import db, bot, dp
-from states.Userstates import PersonalInfo, SendIMEI, Add
+from states.Userstates import SendIMEI, IMEISendAllowance
 from keyboards.default import UserKeyboard
 from aiogram.types import ReplyKeyboardRemove
 from data.config import ADMINS
@@ -11,14 +11,13 @@ from datetime import datetime, date
 
 import os
 import easyocr
-from io import BytesIO
 
 reader = easyocr.Reader(['en'])
 
 DOWNLOAD_DIRECTORY = '/Users/bez/Desktop/IMEI bot2/utils/photos/'
 
 
-@dp.message_handler(Command(["add_imei"]), state=Add.add)
+@dp.message_handler(Command(["add_IMEI"]), state=IMEISendAllowance.permission_granted)
 async def add(message: types.Message):
     await message.answer("Telefon modelini kiriting...\n\n(Model nomi, RAM, ROM)", reply_markup=types.ReplyKeyboardRemove())
     await SendIMEI.photo.set()
@@ -141,7 +140,7 @@ async def confirmation(message: types.Message, state: FSMContext):
     await bot.send_message(chat_id=ADMINS[0], text=msg)
 
     await message.answer("Rahmat, IMEI muvaffaqiyatli saqlandi! 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
-    await Add.add.set()
+    await IMEISendAllowance.permission_granted.set()
 
 
 @dp.message_handler(text="Tahrirlash ✏️", content_types=types.ContentTypes.TEXT, state=SendIMEI.confirmation)

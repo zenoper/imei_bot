@@ -38,15 +38,14 @@ class Database:
                     result = await connection.execute(command, *args)
             return result
 
-    async def create_table_users(self):
+    async def create_table_vba(self):
         sql = """
-        CREATE TABLE IF NOT EXISTS Users (
+        CREATE TABLE IF NOT EXISTS VBA (
         id SERIAL PRIMARY KEY,
         full_name VARCHAR(255) NOT NULL,
-        region VARCHAR(255) NOT NULL,
+        employee_id VARCHAR(255) NOT NULL,
         shop_name VARCHAR(255) NOT NULL,
         phone_number VARCHAR(255) NOT NULL,
-        supervisor VARCHAR(255) NOT NULL,
         username varchar(255) NULL,
         telegram_id BIGINT NOT NULL UNIQUE
         );
@@ -61,35 +60,35 @@ class Database:
         ])
         return sql, tuple(parameters.values())
 
-    async def add_user(self, full_name, region, shop_name, phone_number, supervisor, username, telegram_id):
-        sql = "INSERT INTO Users(full_name, region, shop_name, phone_number, supervisor, username, telegram_id) VALUES($1, $2, $3, $4, $5, $6, $7) returning *"
-        return await self.execute(sql, full_name, region, shop_name, phone_number, supervisor, username, telegram_id, fetchrow=True)
+    async def add_vba(self, full_name, employee_id, shop_name, phone_number, username, telegram_id):
+        sql = "INSERT INTO VBA(full_name, employee_id, shop_name, phone_number, username, telegram_id) VALUES($1, $2, $3, $4, $5, $6) returning *"
+        return await self.execute(sql, full_name, employee_id, shop_name, phone_number, username, telegram_id, fetchrow=True)
 
 
-    async def select_all_users(self):
-        sql = "SELECT * FROM Users"
+    async def select_all_vbas(self):
+        sql = "SELECT * FROM VBA"
         return await self.execute(sql, fetch=True)
 
 
-    async def select_user(self, **kwargs):
-        sql = "SELECT * FROM Users WHERE "
+    async def select_vba(self, **kwargs):
+        sql = "SELECT * FROM VBA WHERE "
         sql, parameters = self.format_args(sql, parameters=kwargs)
         return await self.execute(sql, *parameters, fetchrow=True)
 
 
-    async def count_users(self):
-        sql = "SELECT COUNT(*) FROM Users"
+    async def count_vbas(self):
+        sql = "SELECT COUNT(*) FROM VBA"
         return await self.execute(sql, fetchval=True)
 
-    async def update_user_username(self, username, telegram_id):
-        sql = "UPDATE Users SET username=$1 WHERE telegram_id=$2"
+    async def update_vba_username(self, username, telegram_id):
+        sql = "UPDATE VBA SET username=$1 WHERE telegram_id=$2"
         return await self.execute(sql, username, telegram_id, execute=True)
 
-    async def delete_user(self):
-        await self.execute("DELETE FROM Users WHERE TRUE", execute=True)
+    async def delete_vba(self):
+        await self.execute("DELETE FROM VBA WHERE TRUE", execute=True)
 
-    async def drop_users(self):
-        await self.execute("DROP TABLE Users", execute=True)
+    async def drop_vbas(self):
+        await self.execute("DROP TABLE VBA", execute=True)
 
 
 
