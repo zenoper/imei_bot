@@ -11,7 +11,7 @@ class VBAInfo(StatesGroup):
     confirmation = State()
 
 
-class SendIMEI(StatesGroup):
+class AddIMEI(StatesGroup):
     photo = State()
     phonemodel = State()
     IMEI = State()

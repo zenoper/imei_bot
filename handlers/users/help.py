@@ -24,7 +24,7 @@ async def bot_help(message: types.Message):
                 "/add_VBA - VBA qo'shish"
                 )
         await message.answer("\n".join(text))
-    elif user and user[7] == message.from_user.id:
+    elif user:
         text = ("Buyruqlar: ",
                 "/start - Botni ishga tushirish",
                 "/help - Yordam",
