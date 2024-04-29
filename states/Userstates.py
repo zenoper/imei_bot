@@ -13,9 +13,10 @@ class VBAInfo(StatesGroup):
 
 class AddIMEI(StatesGroup):
     photo = State()
-    phonemodel = State()
-    IMEI = State()
-    sticker = State()
+    IMEI_confirm = State()
+    IMEI_manual = State()
+    model = State()
+    specific_model = State()
     confirmation = State()
 
 

@@ -8,6 +8,7 @@ from keyboards.default import UserKeyboard
 from aiogram.types import ReplyKeyboardRemove
 from data.config import ADMINS
 from datetime import datetime, date
+from keyboards.inline import imei_confirmation
 
 import os
 import easyocr
@@ -30,7 +31,7 @@ async def add(message: types.Message):
 
 
 @dp.message_handler(state=AddIMEI.photo, content_types=types.ContentTypes.PHOTO)
-async def add(message: types.Message):
+async def add(message: types.Message, state: FSMContext):
     # Perform OCR on the preprocessed image
     file_path = os.path.join(DOWNLOAD_DIRECTORY, "vivo.jpg")
     await message.photo[-1].download(destination_file=file_path)
@@ -39,126 +40,171 @@ async def add(message: types.Message):
     print(text_str)
     match = re.search(r'\d{15}', text_str)
     IMEI = match.group(0)
-    await message.answer(f"Rasmdagi IMEI1 shu raqammi? -> \n\n<b>{IMEI}</b> \n\n?")
-
-
-@dp.message_handler(state=AddIMEI.phonemodel, content_types=types.ContentTypes.TEXT)
-async def phonemodel(message:  types.Message, state: FSMContext):
-    phonemodel = message.text
-    if len(phonemodel) <= 3:
-        await message.answer("Iltimos, telefon modelini <b>to'liq</b> kiriting!")
-    else:
-        telegram_id = message.from_user.id
-        await state.update_data({
-            "phonemodel": phonemodel,
-            "telegram_id": telegram_id,
-        })
-        await message.answer("IMEI raqamini kiriting")
-        await AddIMEI.IMEI.set()
-
-
-@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.phonemodel)
-async def fullname(message: types.Message):
-    await message.answer("Iltimos, faqatgina harflardan foydalaning!")
-
-
-@dp.message_handler(state=AddIMEI.IMEI, content_types=types.ContentTypes.TEXT)
-async def imei(message:  types.Message, state: FSMContext):
-    imei = message.text
-    if len(imei) < 15:
-        await message.answer("Iltimos, IMEI raqamini <b>to'liq</b> kiriting!")
-    else:
-        await state.update_data({
-            "imei": imei
-        })
-        await message.answer("Stickerni rasmga olib jo'nating!")
-        await AddIMEI.sticker.set()
-
-
-@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.IMEI)
-async def fullname(message: types.Message):
-    await message.answer("Iltimos, faqatgina harflardan foydalaning!")
-
-
-@dp.message_handler(state=AddIMEI.sticker, content_types=types.ContentTypes.PHOTO)
-async def imei(message:  types.Message, state: FSMContext):
-    sticker = message.photo[-1].file_id
-
     await state.update_data({
-        "sticker": sticker
+        "IMEI": IMEI
     })
+    await message.answer(f"Rasmdagi shu raqammi? -> \n\n<b>IMEI1: {IMEI}</b> \n\n?",
+                         reply_markup=imei_confirmation.confirmation_keyboard)
+    await AddIMEI.IMEI_confirm.set()
 
-    data = await state.get_data()
-    phonemodel = data.get("phonemodel")
-    imei = data.get("imei")
-    sticker = data.get("sticker")
 
-    msg = "Iltimos, shaxsiy ma'lumotingiz to'g'riligini tasdiqlang!"
-    msg += f"Telefon Modeli - <b>{phonemodel}</b> \n\n"
-    msg += f"IMEI raqami - <b>{imei}</b> \n\n"
+@dp.callback_query_handler(text="correct", state=AddIMEI.IMEI_confirm)
+async def confirm(call: types.CallbackQuery):
+    print("working!")
+    await call.message.answer("Modelni tanlang:", reply_markup=imei_confirmation.model_type)
+    await call.answer(cache_time=60)
+    await AddIMEI.model.set()
 
-    await message.answer_photo(photo=sticker, caption=msg, reply_markup=UserKeyboard.confirmation)
-    await AddIMEI.confirmation.set()
 
-    @dp.message_handler(state=AddIMEI.sticker, content_types=types.ContentTypes.DOCUMENT)
-    async def imei(message: types.Message, state: FSMContext):
-        sticker = message.document.file_id
+@dp.callback_query_handler(text="incorrect", state=AddIMEI.IMEI_confirm)
+async def confirm(call: types.CallbackQuery):
+    print("working!")
+    await call.message.answer("IMEI ni kiriting...")
+    await call.answer(cache_time=60)
+    await AddIMEI.IMEI_manual.set()
 
+
+@dp.message_handler(state=AddIMEI.IMEI_manual, content_types=types.ContentTypes.TEXT)
+async def imei_manual(message:  types.Message, state: FSMContext):
+    IMEI = await message.text
+    if len(IMEI) < 15:
+        await message.answer("Iltimos, IMEI ni <b>to'liq</b> kiriting!")
+    else:
         await state.update_data({
-            "sticker": sticker
+            "IMEI": IMEI
         })
-
-        data = await state.get_data()
-        phonemodel = data.get("phonemodel")
-        imei = data.get("imei")
-        sticker = data.get("sticker")
-
-        msg = "Iltimos, shaxsiy ma'lumotingiz to'g'riligini tasdiqlang!"
-        msg += f"Telefon Modeli - <b>{phonemodel}</b> \n\n"
-        msg += f"IMEI raqami - <b>{imei}</b> \n\n"
-
-        await message.answer_document(document=sticker, thumb=sticker, caption=msg, reply_markup=UserKeyboard.confirmation)
-        await AddIMEI.confirmation.set()
+        await message.answer("Modelni tanlang:", reply_markup=imei_confirmation.model_type)
+        await AddIMEI.model.set()
 
 
-@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.sticker)
+@dp.message_handler(state=AddIMEI.IMEI_manual, content_types=types.ContentTypes.ANY)
+async def imei_manual(message:  types.Message, state: FSMContext):
+    await message.answer("Iltimos, IMEI ni <b>text</b> formatida kiriting!")
+
+
+@dp.message_handler(state=AddIMEI.IMEI_confirm, content_types=types.ContentTypes.ANY)
+async def confirm(message: types.Message):
+    await message.answer("Iltimos, tugmalardan birini bosing!.")
+
+
+@dp.message_handler(state=AddIMEI.IMEI_confirm)
+async def phone_model(message:  types.Message):
+    model = message.text
+    if model == "V":
+        await message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelV)
+        await AddIMEI.specific_model.set()
+    elif model == "Y":
+        await message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelY)
+        await AddIMEI.specific_model.set()
+    elif model == "X":
+        await message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelX)
+        await AddIMEI.specific_model.set()
+    else:
+        await message.answer("Iltimos, tugmalardan birini bosing!")
+
+
+@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.IMEI_confirm)
 async def fullname(message: types.Message):
-    await message.answer("Iltimos, faqatgina rasm jo'nating!")
+    await message.answer("Iltimos, faqatgina harflardan foydalaning!")
 
 
-@dp.message_handler(text="Tasdiqlash ✅", content_types=types.ContentTypes.TEXT, state=AddIMEI.confirmation)
-async def confirmation(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-
-    today = date.today()
-
-    now_time = datetime.now().time()
-
-    try:
-        imei = await db.add_imei(
-            model=data.get("phonemodel"),
-            imei=data.get("imei"),
-            sticker=data.get("sticker"),
-            now_date=f"{today}, {now_time}",
-            telegram_id=data.get("telegram_id"),
-        )
-    except asyncpg.exceptions.UniqueViolationError:
-        imei = await db.select_imei(telegram_id=data.get("telegram_id"))
-
-    count = await db.count_imei()
-    msg = f"IMEI '{imei[2]}' has been added to the database! We now have {count} IMEIs"
-    await bot.send_message(chat_id=ADMINS[0], text=msg)
-
-    await message.answer("Rahmat, IMEI muvaffaqiyatli saqlandi! 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
-    await IMEISendAllowance.permission_granted.set()
-
-
-@dp.message_handler(text="Tahrirlash ✏️", content_types=types.ContentTypes.TEXT, state=AddIMEI.confirmation)
-async def edit(message: types.Message):
-    await message.answer("Telefon modelini kiriting...")
-    await AddIMEI.phonemodel.set()
-
-
-@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.confirmation)
-async def confirmation(message: types.Message):
-    await message.answer("Iltimos, tugmalardan birini bosing!", reply_markup=UserKeyboard.confirmation)
+# @dp.message_handler(state=AddIMEI.IMEI, content_types=types.ContentTypes.TEXT)
+# async def imei(message:  types.Message, state: FSMContext):
+#     imei = message.text
+#     if len(imei) < 15:
+#         await message.answer("Iltimos, IMEI raqamini <b>to'liq</b> kiriting!")
+#     else:
+#         await state.update_data({
+#             "imei": imei
+#         })
+#         await message.answer("Stickerni rasmga olib jo'nating!")
+#         await AddIMEI.sticker.set()
+#
+#
+# @dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.IM)
+# async def fullname(message: types.Message):
+#     await message.answer("Iltimos, faqatgina harflardan foydalaning!")
+#
+#
+# @dp.message_handler(state=AddIMEI.sticker, content_types=types.ContentTypes.PHOTO)
+# async def imei(message:  types.Message, state: FSMContext):
+#     sticker = message.photo[-1].file_id
+#
+#     await state.update_data({
+#         "sticker": sticker
+#     })
+#
+#     data = await state.get_data()
+#     phonemodel = data.get("phonemodel")
+#     imei = data.get("imei")
+#     sticker = data.get("sticker")
+#
+#     msg = "Iltimos, shaxsiy ma'lumotingiz to'g'riligini tasdiqlang!"
+#     msg += f"Telefon Modeli - <b>{phonemodel}</b> \n\n"
+#     msg += f"IMEI raqami - <b>{imei}</b> \n\n"
+#
+#     await message.answer_photo(photo=sticker, caption=msg, reply_markup=UserKeyboard.confirmation)
+#     await AddIMEI.confirmation.set()
+#
+#     @dp.message_handler(state=AddIMEI.sticker, content_types=types.ContentTypes.DOCUMENT)
+#     async def imei(message: types.Message, state: FSMContext):
+#         sticker = message.document.file_id
+#
+#         await state.update_data({
+#             "sticker": sticker
+#         })
+#
+#         data = await state.get_data()
+#         phonemodel = data.get("phonemodel")
+#         imei = data.get("imei")
+#         sticker = data.get("sticker")
+#
+#         msg = "Iltimos, shaxsiy ma'lumotingiz to'g'riligini tasdiqlang!"
+#         msg += f"Telefon Modeli - <b>{phonemodel}</b> \n\n"
+#         msg += f"IMEI raqami - <b>{imei}</b> \n\n"
+#
+#         await message.answer_document(document=sticker, thumb=sticker, caption=msg, reply_markup=UserKeyboard.confirmation)
+#         await AddIMEI.confirmation.set()
+#
+#
+# @dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.sticker)
+# async def fullname(message: types.Message):
+#     await message.answer("Iltimos, faqatgina rasm jo'nating!")
+#
+#
+# @dp.message_handler(text="Tasdiqlash ✅", content_types=types.ContentTypes.TEXT, state=AddIMEI.confirmation)
+# async def confirmation(message: types.Message, state: FSMContext):
+#     data = await state.get_data()
+#
+#     today = date.today()
+#
+#     now_time = datetime.now().time()
+#
+#     try:
+#         imei = await db.add_imei(
+#             model=data.get("phonemodel"),
+#             imei=data.get("imei"),
+#             sticker=data.get("sticker"),
+#             now_date=f"{today}, {now_time}",
+#             telegram_id=data.get("telegram_id"),
+#         )
+#     except asyncpg.exceptions.UniqueViolationError:
+#         imei = await db.select_imei(telegram_id=data.get("telegram_id"))
+#
+#     count = await db.count_imei()
+#     msg = f"IMEI '{imei[2]}' has been added to the database! We now have {count} IMEIs"
+#     await bot.send_message(chat_id=ADMINS[0], text=msg)
+#
+#     await message.answer("Rahmat, IMEI muvaffaqiyatli saqlandi! 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
+#     await IMEISendAllowance.permission_granted.set()
+#
+#
+# @dp.message_handler(text="Tahrirlash ✏️", content_types=types.ContentTypes.TEXT, state=AddIMEI.confirmation)
+# async def edit(message: types.Message):
+#     await message.answer("Telefon modelini kiriting...")
+#     await AddIMEI.phonemodel.set()
+#
+#
+# @dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.confirmation)
+# async def confirmation(message: types.Message):
+#     await message.answer("Iltimos, tugmalardan birini bosing!", reply_markup=UserKeyboard.confirmation)
