@@ -5,7 +5,7 @@ from loader import dp, db
 from data.config import ADMINS, HR
 
 
-@dp.message_handler(CommandHelp())
+@dp.message_handler(CommandHelp(), state="*")
 async def bot_help(message: types.Message):
     user = await db.select_vba(telegram_id=message.from_user.id)
     ad_hr_id = str(message.from_user.id)

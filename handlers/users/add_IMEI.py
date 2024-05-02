@@ -19,19 +19,23 @@ reader = easyocr.Reader(['en'])
 DOWNLOAD_DIRECTORY = '/Users/bez/Desktop/IMEI bot2/utils/photos/'
 
 
-@dp.message_handler(Command(["add_IMEI"]))
-async def add(message: types.Message):
+@dp.message_handler(Command(["add_IMEI"]), state=IMEISendAllowance.permission_granted)
+async def add(message: types.Message, state: FSMContext):
     telegram_id = message.from_user.id
     vba = await db.select_vba(telegram_id=telegram_id)
     if vba:
         await message.answer("IMEI ni rasmga olib jo'nating. \n\n*Iloji boricha yaqindan", reply_markup=types.ReplyKeyboardRemove())
         await AddIMEI.photo.set()
+        await state.update_data({
+            'telegram_id': telegram_id
+        })
     else:
         await message.answer("You have no permission. \n\nSizda IMEI qo'shish uchun ruxsat yo'q.")
 
 
 @dp.message_handler(state=AddIMEI.photo, content_types=types.ContentTypes.PHOTO)
 async def add(message: types.Message, state: FSMContext):
+    photo_id = message.photo[-1].file_id
     # Perform OCR on the preprocessed image
     file_path = os.path.join(DOWNLOAD_DIRECTORY, "vivo.jpg")
     await message.photo[-1].download(destination_file=file_path)
@@ -41,32 +45,41 @@ async def add(message: types.Message, state: FSMContext):
     match = re.search(r'\d{15}', text_str)
     IMEI = match.group(0)
     await state.update_data({
-        "IMEI": IMEI
+        "IMEI": IMEI,
+        "sticker": photo_id
     })
     await message.answer(f"Rasmdagi shu raqammi? -> \n\n<b>IMEI1: {IMEI}</b> \n\n?",
                          reply_markup=imei_confirmation.confirmation_keyboard)
     await AddIMEI.IMEI_confirm.set()
 
 
-@dp.callback_query_handler(text="correct", state=AddIMEI.IMEI_confirm)
-async def confirm(call: types.CallbackQuery):
-    print("working!")
-    await call.message.answer("Modelni tanlang:", reply_markup=imei_confirmation.model_type)
-    await call.answer(cache_time=60)
-    await AddIMEI.model.set()
+@dp.message_handler(state=AddIMEI.photo, content_types=types.ContentTypes.ANY)
+async def add(message: types.Message):
+    await message.answer(f"Iltimos, faqatgina rasm jo'nating!")
 
 
-@dp.callback_query_handler(text="incorrect", state=AddIMEI.IMEI_confirm)
-async def confirm(call: types.CallbackQuery):
-    print("working!")
-    await call.message.answer("IMEI ni kiriting...")
-    await call.answer(cache_time=60)
-    await AddIMEI.IMEI_manual.set()
+@dp.callback_query_handler(state=AddIMEI.IMEI_confirm)
+async def confirm(call: types.CallbackQuery, state: FSMContext):
+    callback_data = call.data
+    if callback_data == "correct":
+        await call.message.answer("Modelni tanlang:", reply_markup=imei_confirmation.model_type)
+        await AddIMEI.model.set()
+    elif callback_data == "incorrect":
+        await call.message.answer("IMEI ni kiriting...")
+        await AddIMEI.IMEI_manual.set()
+    else:
+        await call.message.answer("Iltimos, tugmalardan birini bosing!.",
+                                  reply_markup=imei_confirmation.confirmation_keyboard)
+
+
+@dp.message_handler(state=AddIMEI.IMEI_confirm, content_types=types.ContentTypes.ANY)
+async def confirm(message: types.Message):
+    await message.answer("Iltimos, tugmalardan birini bosing!")
 
 
 @dp.message_handler(state=AddIMEI.IMEI_manual, content_types=types.ContentTypes.TEXT)
 async def imei_manual(message:  types.Message, state: FSMContext):
-    IMEI = await message.text
+    IMEI = message.text
     if len(IMEI) < 15:
         await message.answer("Iltimos, IMEI ni <b>to'liq</b> kiriting!")
     else:
@@ -78,35 +91,93 @@ async def imei_manual(message:  types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=AddIMEI.IMEI_manual, content_types=types.ContentTypes.ANY)
-async def imei_manual(message:  types.Message, state: FSMContext):
+async def imei_manual(message:  types.Message):
     await message.answer("Iltimos, IMEI ni <b>text</b> formatida kiriting!")
 
 
-@dp.message_handler(state=AddIMEI.IMEI_confirm, content_types=types.ContentTypes.ANY)
-async def confirm(message: types.Message):
-    await message.answer("Iltimos, tugmalardan birini bosing!.")
-
-
-@dp.message_handler(state=AddIMEI.IMEI_confirm)
-async def phone_model(message:  types.Message):
-    model = message.text
+@dp.callback_query_handler(state=AddIMEI.model)
+async def phone_model(call: types.CallbackQuery):
+    model = call.data
     if model == "V":
-        await message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelV)
+        await call.message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelV)
         await AddIMEI.specific_model.set()
     elif model == "Y":
-        await message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelY)
+        await call.message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelY)
         await AddIMEI.specific_model.set()
     elif model == "X":
-        await message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelX)
+        await call.message.answer("Aniq modelni tanlang:", reply_markup=imei_confirmation.modelX)
         await AddIMEI.specific_model.set()
     else:
-        await message.answer("Iltimos, tugmalardan birini bosing!")
+        await call.message.answer("Iltimos, tugmalardan birini bosing!",  reply_markup=imei_confirmation.model_type)
 
 
-@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.IMEI_confirm)
+@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.model)
 async def fullname(message: types.Message):
-    await message.answer("Iltimos, faqatgina harflardan foydalaning!")
+    await message.answer("Iltimos, tugmalardan birini bosing!")
 
+
+@dp.callback_query_handler(state=AddIMEI.specific_model)
+async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
+    model_specific = call.data
+    print(model_specific)
+    await state.update_data({
+        "model": model_specific
+    })
+
+    data = await state.get_data()
+    IMEI = data.get("IMEI")
+    model = data.get("model")
+    sticker = data.get("sticker")
+
+    msg = "Iltimos, kiritilgan ma'lumot to'g'riligini tasdiqlang: \n\n"
+    msg += f"IMEI raqami - <b>{IMEI}</b> \n\n"
+    msg += f"Telefon modeli - <b>{model}</b> \n\n"
+
+    await call.message.answer_photo(photo=sticker, caption=msg, reply_markup=imei_confirmation.confirmation_keyboard2)
+    await AddIMEI.confirmation.set()
+
+
+@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.specific_model)
+async def fullname(message: types.Message):
+    await message.answer("Iltimos, tugmalardan birini bosing!")
+
+
+@dp.callback_query_handler(state=AddIMEI.confirmation, text="Tasdiqlash ✅")
+async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
+    today = date.today()
+    now_time = datetime.now().time().strftime("%H:%M:%S")
+
+    data = await state.get_data()
+
+    try:
+        imei = await db.add_imei(
+            IMEI=data.get("IMEI"),
+            Model=data.get("model"),
+            Sticker=data.get("sticker"),
+            Date_month=str(today),
+            Time_day=str(now_time),
+            Telegram_id=data.get("telegram_id"),
+        )
+    except asyncpg.exceptions.UniqueViolationError:
+        imei = await db.select_imei(IMEI=data.get("IMEI"))
+        msg = f"IMEI '{imei[1]}' already exists! Watch out for monkey business! \n\nTelegram ID: {imei[6]}"
+        await bot.send_message(chat_id=ADMINS[0], text=msg)
+        await call.message.answer(f"Bu IMEI oldin kiritilgan. Qayta kiritish imkonsiz. \n\n@muhammadkodir_mahmudjanov ga aloqaga chiqing.")
+        await state.finish()
+    except Exception as e:
+        await call.message.answer(f"Qandaydir xatolik yuz berdi. \n\nTahrirlash orqali qayta urinib ko'ring!", reply_markup=imei_confirmation.edit_keyboard)
+    else:
+        count = await db.count_imei()
+        msg = f"IMEI '{imei[1]}' has been added to the database! We now have {count} IMEIs"
+        await bot.send_message(chat_id=ADMINS[0], text=msg)
+
+        await call.message.answer("Rahmat, IMEI muvaffaqiyatli saqlandi! 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
+        await state.finish()
+
+
+@dp.message_handler(content_types=types.ContentTypes.ANY, state=AddIMEI.specific_model)
+async def fullname(message: types.Message):
+    await message.answer("Iltimos, tugmalardan birini bosing!")
 
 # @dp.message_handler(state=AddIMEI.IMEI, content_types=types.ContentTypes.TEXT)
 # async def imei(message:  types.Message, state: FSMContext):
@@ -199,7 +270,7 @@ async def fullname(message: types.Message):
 #     await IMEISendAllowance.permission_granted.set()
 #
 #
-# @dp.message_handler(text="Tahrirlash ✏️", content_types=types.ContentTypes.TEXT, state=AddIMEI.confirmation)
+# @dp.message_handler(tex t="Tahrirlash ✏️", content_types=types.ContentTypes.TEXT, state=AddIMEI.confirmation)
 # async def edit(message: types.Message):
 #     await message.answer("Telefon modelini kiriting...")
 #     await AddIMEI.phonemodel.set()
