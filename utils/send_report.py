@@ -3,7 +3,6 @@ from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
 import asyncio
 from aiogram.types import InputFile
-
 import pandas as pd
 from io import BytesIO
 
@@ -11,7 +10,7 @@ from data.config import HR
 
 
 async def send_daily_report():
-    from loader import db, bot
+    from loader import db
     # Generate an in-memory Excel file
     excel_file = await db.join_tables_and_export()
 
@@ -34,14 +33,34 @@ async def send_daily_report():
         user_output.close()  # Close the BytesIO object
 
 
+async def ask_daily_sales():
+    from loader import db, bot
+    vbas = db.select_all_vbas()# Up to 200 user IDs
+    message_text = "Kunlik sotuvlaringizni kiritishni unutmang! \n\n/add_IMEI orqali IMEI kiritishingiz mumkin!"
+    for vba in vbas:
+        try:
+            await bot.send_message(vba[5], message_text)
+            await asyncio.sleep(0.1)  # Sleep for 100ms between messages
+        except Exception as e:
+            print(f"Failed to send message to {vba[5]}: {str(e)}")
+
+
 def schedule_daily_tasks():
     scheduler = AsyncIOScheduler()
     uzb_timezone = timezone('Asia/Tashkent')
 
     scheduler.add_job(
         send_daily_report,
-        trigger=CronTrigger(hour=15, minute=37, second=0, timezone=uzb_timezone),
-        replace_existing=True
+        trigger=CronTrigger(hour=9, minute=4, second=0, timezone=uzb_timezone),
+        replace_existing=True,
+        id="send_daily_report"
+    )
+
+    scheduler.add_job(
+        ask_daily_sales,
+        trigger=CronTrigger(hour=20, minute=0, second=0, timezone=uzb_timezone),
+        replace_existing=True,
+        id="ask_daily_sales"
     )
 
     scheduler.start()

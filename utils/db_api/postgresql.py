@@ -7,7 +7,7 @@ import pandas as pd
 
 from data import config
 from datetime import datetime, timedelta
-from io import BytesIO
+
 
 class Database:
 
@@ -66,17 +66,14 @@ class Database:
         sql = "INSERT INTO VBA(full_name, employee_id, shop_name, phone_number, telegram_id) VALUES($1, $2, $3, $4, $5) returning *"
         return await self.execute(sql, full_name, employee_id, shop_name, phone_number, telegram_id, fetchrow=True)
 
-
     async def select_all_vbas(self):
         sql = "SELECT * FROM VBA"
         return await self.execute(sql, fetch=True)
-
 
     async def select_vba(self, **kwargs):
         sql = "SELECT * FROM VBA WHERE "
         sql, parameters = self.format_args(sql, parameters=kwargs)
         return await self.execute(sql, *parameters, fetchrow=True)
-
 
     async def count_vbas(self):
         sql = "SELECT COUNT(*) FROM VBA"
@@ -92,9 +89,7 @@ class Database:
     async def drop_vbas(self):
         await self.execute("DROP TABLE VBA", execute=True)
 
-
-
-
+# TABLE IMEI
 
     async def create_table_imei(self):
         sql = """
@@ -145,11 +140,10 @@ class Database:
 
         yesterday = datetime.now() - timedelta(days=1)
         yesterday_date = yesterday.strftime('%Y-%m-%d')
-        # SQL to join VBA and IMEI tables on the 'telegram_id' field
         join_query = f"""
                 SELECT VBA.full_name, VBA.shop_name, IMEI.Model, IMEI.Date_month, IMEI.Time_day 
                 FROM VBA
-                JOIN IMEI ON VBA.telegram_id = IMEI.Telegram_id
+                JOIN IMEI ON VBA.telegram_id = IMEI.Telegram_id 
                 WHERE IMEI.Date_month = '{yesterday_date}';
                 """
         async with self.pool.acquire() as connection:
@@ -157,7 +151,104 @@ class Database:
                 result = await connection.fetch(join_query)
                 if result:
                     column_names = ['full_name', 'shop_name', 'model', 'date_month', 'time_day']
-                    # Convert result to a Pandas DataFrame
+                    df = pd.DataFrame([dict(rec) for rec in result], columns=column_names)
+
+                    return df
+                else:
+                    print("No data found for the specified date.")
+                    return None
+
+# TABLE STOCK
+
+    async def create_table_stock_count(self):
+        sql = """
+        CREATE TABLE IF NOT EXISTS Stock (
+        Telegram_id BIGINT NOT NULL UNIQUE,
+        V30 VARCHAR(255) NOT NULL,
+        V29 VARCHAR(255) NOT NULL,
+        V29e VARCHAR(255) NOT NULL,
+        V27 VARCHAR(255) NOT NULL,
+        Y27s VARCHAR(255) NOT NULL,
+        V27e VARCHAR(255) NOT NULL,
+        V25 VARCHAR(255) NOT NULL,
+        V25pro VARCHAR(255) NOT NULL,
+        V25e VARCHAR(255) NOT NULL,
+        V23 VARCHAR(255) NOT NULL,
+        V23e VARCHAR(255) NOT NULL,
+        V21 VARCHAR(255) NOT NULL,
+        V21e VARCHAR(255) NOT NULL,
+        Y100 VARCHAR(255) NOT NULL,
+        Y53S_6GB VARCHAR(255) NOT NULL,
+        Y53S 8GB VARCHAR(255) NOT NULL,
+        Y36 VARCHAR(255) NOT NULL,
+        Y35 VARCHAR(255) NOT NULL,
+        Y33S 128GB VARCHAR(255) NOT NULL,
+        Y33S 64GB VARCHAR(255) NOT NULL,
+        Y31 VARCHAR(255) NOT NULL,
+        Y27 VARCHAR(255) NOT NULL,
+        Y27s VARCHAR(255) NOT NULL,
+        Y22 VARCHAR(255) NOT NULL,
+        Y21 VARCHAR(255) NOT NULL,
+        Y17s_4_128 VARCHAR(255) NOT NULL,
+        Y17s_6_128 VARCHAR(255) NOT NULL,
+        Y16 VARCHAR(255) NOT NULL,
+        Y15S VARCHAR(255) NOT NULL,
+        Y12S VARCHAR(255) NOT NULL,
+        Y03 64gb VARCHAR(255) NOT NULL,
+        Y03 128gb VARCHAR(255) NOT NULL,
+        Y02T VARCHAR(255) NOT NULL,
+        Y1S VARCHAR(255) NOT NULL,
+        X100 VARCHAR(255) NOT NULL,
+        );
+        """
+        await self.execute(sql, execute=True)
+
+    @staticmethod
+    def format_args(sql, parameters: dict):
+        sql += " AND ".join([
+            f"{item} = ${num}" for num, item in enumerate(parameters.keys(),
+                                                          start=1)
+        ])
+        return sql, tuple(parameters.values())
+
+    async def add_imei(self, IMEI, Model, Sticker, Date_month, Time_day, Telegram_id):
+        sql = "INSERT INTO IMEI(IMEI, Model, Sticker, Date_month, Time_day, Telegram_id) VALUES($1, $2, $3, $4, $5, $6) returning *"
+        return await self.execute(sql, IMEI, Model, Sticker, Date_month, Time_day, Telegram_id, fetchrow=True)
+
+    async def select_all_imei(self):
+        sql = "SELECT * FROM IMEI"
+        return await self.execute(sql, fetch=True)
+
+    async def select_imei(self, **kwargs):
+        sql = "SELECT * FROM IMEI WHERE "
+        sql, parameters = self.format_args(sql, parameters=kwargs)
+        return await self.execute(sql, *parameters, fetchrow=True)
+
+    async def count_imei(self):
+        sql = "SELECT COUNT(*) FROM IMEI"
+        return await self.execute(sql, fetchval=True)
+
+    async def delete_imei(self):
+        await self.execute("DELETE FROM IMEI WHERE TRUE", execute=True)
+
+    async def drop_imei(self):
+        await self.execute("DROP TABLE IMEI", execute=True)
+
+    async def join_tables_and_export(self):
+
+        yesterday = datetime.now() - timedelta(days=1)
+        yesterday_date = yesterday.strftime('%Y-%m-%d')
+        join_query = f"""
+                SELECT VBA.full_name, VBA.shop_name, IMEI.Model, IMEI.Date_month, IMEI.Time_day 
+                FROM VBA
+                JOIN IMEI ON VBA.telegram_id = IMEI.Telegram_id 
+                WHERE IMEI.Date_month = '{yesterday_date}';
+                """
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                result = await connection.fetch(join_query)
+                if result:
+                    column_names = ['full_name', 'shop_name', 'model', 'date_month', 'time_day']
                     df = pd.DataFrame([dict(rec) for rec in result], columns=column_names)
 
                     return df

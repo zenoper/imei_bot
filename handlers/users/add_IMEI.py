@@ -19,7 +19,7 @@ reader = easyocr.Reader(['en'])
 DOWNLOAD_DIRECTORY = '/Users/bez/Desktop/IMEI bot2/utils/photos/'
 
 
-@dp.message_handler(Command(["add_IMEI"]), state=IMEISendAllowance.permission_granted)
+@dp.message_handler(Command(["add_IMEI"]))
 async def add(message: types.Message, state: FSMContext):
     telegram_id = message.from_user.id
     vba = await db.select_vba(telegram_id=telegram_id)

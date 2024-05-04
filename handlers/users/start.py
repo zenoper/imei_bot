@@ -26,6 +26,5 @@ async def bot_start(message: types.Message):
                 "/add_IMEI - IMEI qo'shish"
                 )
         await message.answer("\n".join(text))
-        await IMEISendAllowance.permission_granted.set()
     else:
         await message.answer("You have no permission")

@@ -52,20 +52,22 @@ modelX = InlineKeyboardMarkup(
 modelY = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton("Y17s", callback_data="Y17s"),
+            InlineKeyboardButton("Y17s 4/128", callback_data="Y17s 4/128"),
+            InlineKeyboardButton("Y17s 6/128", callback_data="Y17s 6/128"),
             InlineKeyboardButton("Y100", callback_data="Y100"),
-            InlineKeyboardButton("Y03", callback_data="Y03"),
+            InlineKeyboardButton("Y03 64gb", callback_data="Y03 64gb"),
+            InlineKeyboardButton("Y03 128gb", callback_data="Y03 128gb"),
             InlineKeyboardButton("Y27s", callback_data="Y27s"),
             InlineKeyboardButton("Y02T", callback_data="Y02T"),
-            InlineKeyboardButton("Y36", callback_data="Y36"),
         ],
         [
-            InlineKeyboardButton(text="Y53S", callback_data="Y53S"),
+            InlineKeyboardButton(text="Y53S 6GB", callback_data="Y53S 6GB"),
+            InlineKeyboardButton(text="Y53S 8GB", callback_data="Y53S 8GB"),
             InlineKeyboardButton(text="Y35", callback_data="Y35"),
-            InlineKeyboardButton(text="Y33S", callback_data="Y33S"),
+            InlineKeyboardButton(text="Y33S 128GB", callback_data="Y33S 128GB"),
+            InlineKeyboardButton(text="Y33S 64GB", callback_data="Y33S 64GB"),
             InlineKeyboardButton(text="Y12S", callback_data="Y12S"),
             InlineKeyboardButton(text="Y1S", callback_data="Y1S"),
-            InlineKeyboardButton(text="Y31", callback_data="Y31"),
         ],
         [
             InlineKeyboardButton(text="Y27", callback_data="Y27"),
@@ -73,10 +75,11 @@ modelY = InlineKeyboardMarkup(
             InlineKeyboardButton(text="Y21", callback_data="Y21"),
             InlineKeyboardButton(text="Y16", callback_data="Y16"),
             InlineKeyboardButton(text="Y15S", callback_data="Y15S"),
+            InlineKeyboardButton("Y36", callback_data="Y36"),
+            InlineKeyboardButton(text="Y31", callback_data="Y31"),
         ],
     ]
 )
-
 
 
 modelV = InlineKeyboardMarkup(
@@ -86,11 +89,12 @@ modelV = InlineKeyboardMarkup(
             InlineKeyboardButton(text="V29", callback_data="V29"),
             InlineKeyboardButton(text="V29e", callback_data="V29e"),
             InlineKeyboardButton(text="V27", callback_data="V27"),
+            InlineKeyboardButton(text="Y27s", callback_data="Y27s"),
         ],
         [
-            InlineKeyboardButton(text="V21E", callback_data="V21E"),
+            InlineKeyboardButton(text="V21e", callback_data="V21e"),
             InlineKeyboardButton(text="V21", callback_data="V21"),
-            InlineKeyboardButton(text="V23E", callback_data="V23E"),
+            InlineKeyboardButton(text="V23e", callback_data="V23e"),
             InlineKeyboardButton(text="V23", callback_data="V23"),
         ],
         [
