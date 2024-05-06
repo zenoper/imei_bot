@@ -41,7 +41,6 @@ async def add(message: types.Message, state: FSMContext):
     await message.photo[-1].download(destination_file=file_path)
     result = reader.readtext(file_path, detail=0, paragraph=True)
     text_str = ' '.join(result)
-    print(text_str)
     match = re.search(r'\d{15}', text_str)
     IMEI = match.group(0)
     await state.update_data({
@@ -119,7 +118,6 @@ async def fullname(message: types.Message):
 @dp.callback_query_handler(state=AddIMEI.specific_model)
 async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
     model_specific = call.data
-    print(model_specific)
     await state.update_data({
         "model": model_specific
     })
@@ -148,11 +146,26 @@ async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
     now_time = datetime.now().time().strftime("%H:%M:%S")
 
     data = await state.get_data()
+    Model = str(data.get("model"))
+    Telegram_id = data.get("telegram_id")
+
+    try:
+         await db.update_stock_count(
+            model_name=Model,
+            count=5,
+            telegram_id=Telegram_id,
+        )
+    except Exception as e:
+        msg = f"There has been some error in updating stock count! \n\n{e}"
+        await bot.send_message(chat_id=ADMINS[0], text=msg)
+    else:
+        msg = f"Stock Count has been successfully updated!"
+        await bot.send_message(chat_id=ADMINS[0], text=msg)
 
     try:
         imei = await db.add_imei(
             IMEI=data.get("IMEI"),
-            Model=data.get("model"),
+            Model=Model,
             Sticker=data.get("sticker"),
             Date_month=str(today),
             Time_day=str(now_time),

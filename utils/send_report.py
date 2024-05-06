@@ -10,7 +10,7 @@ from data.config import HR
 
 
 async def send_daily_report():
-    from loader import db
+    from loader import db, bot
     # Generate an in-memory Excel file
     excel_file = await db.join_tables_and_export()
 
@@ -43,6 +43,9 @@ async def ask_daily_sales():
             await asyncio.sleep(0.1)  # Sleep for 100ms between messages
         except Exception as e:
             print(f"Failed to send message to {vba[5]}: {str(e)}")
+
+
+
 
 
 def schedule_daily_tasks():

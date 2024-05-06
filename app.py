@@ -11,8 +11,10 @@ async def on_startup(dispatcher):
     await db.create()
     # await db.drop_vbas()
     # await db.drop_imei()
+    # await db.drop_stock()
     await db.create_table_vba()
     await db.create_table_imei()
+    await db.create_table_stock_count()
 
     await set_default_commands(dispatcher)
     await on_startup_notify(dispatcher)

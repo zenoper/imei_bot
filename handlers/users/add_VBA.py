@@ -119,7 +119,7 @@ async def phonen(message: types.Message, state: FSMContext):
     shop = data.get("shopname")
     phone = data.get("phone_number")
 
-    msg = "Iltimos, shaxsiy ma'lumotingiz to'g'riligini tasdiqlang!"
+    msg = "Iltimos, shaxsiy ma'lumotingiz to'g'riligini tasdiqlang! \n\n"
     msg += f"To'liq ism - <b>{full_name}</b> \n\n"
     msg += f"Employee ID - <b>{employee_id}</b> \n\n"
     msg += f"Telegram ID - <b>{telegram_id}</b> \n\n"
@@ -143,14 +143,26 @@ async def phone_number(message: types.Message):
 @dp.message_handler(text="Tasdiqlash ✅", content_types=types.ContentTypes.TEXT, state=VBAInfo.confirmation)
 async def confirmation(message: types.Message, state: FSMContext):
     data = await state.get_data()
-
+    telegram_id = int(data.get("telegram_id"))
+    shop_name = data.get("shopname")
+    try:
+        await db.add_stock_vba(
+            telegram_id=telegram_id,
+            shop_name=shop_name,
+        )
+    except Exception as e:
+        msg = f"There has been some error in adding VBA telegram id to stock database! \n\n{e}"
+        await bot.send_message(chat_id=ADMINS[0], text=msg)
+    else:
+        msg = f"A new VBA has been added to stock database!"
+        await bot.send_message(chat_id=ADMINS[0], text=msg)
     try:
         user = await db.add_vba(
             full_name=data.get("fullname"),
             employee_id=data.get("employee_id"),
-            shop_name=data.get("shopname"),
+            shop_name=shop_name,
             phone_number=data.get("phone_number"),
-            telegram_id=int(data.get("telegram_id")),
+            telegram_id=telegram_id,
         )
     except asyncpg.exceptions.UniqueViolationError:
         user = await db.select_vba(telegram_id=int(data.get("telegram_id")))

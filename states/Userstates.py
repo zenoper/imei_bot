@@ -20,6 +20,11 @@ class AddIMEI(StatesGroup):
     confirmation = State()
 
 
+class StockCount(StatesGroup):
+    start = State()
+    confirmation = State()
+
+
 class IMEISendAllowance(StatesGroup):
     permission_granted = State()
 
