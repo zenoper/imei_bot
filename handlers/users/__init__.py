@@ -1,5 +1,6 @@
 
 from . import start
+from . import stock_update
 from . import imei_sticker
 from . import add_IMEI
 from . import add_VBA

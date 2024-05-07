@@ -1,12 +1,17 @@
+from aiogram.dispatcher import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
 import asyncio
-from aiogram.types import InputFile
+
+from aiogram.types import InputFile, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram import types
+from aiogram.dispatcher import FSMContext
 import pandas as pd
 from io import BytesIO
 
 from data.config import HR
+from states.Userstates import StockCount
 
 
 async def send_daily_report():
@@ -33,19 +38,45 @@ async def send_daily_report():
         user_output.close()  # Close the BytesIO object
 
 
-async def ask_daily_sales():
+async def stock_keyboard(telegram_id):
     from loader import db, bot
-    vbas = db.select_all_vbas()# Up to 200 user IDs
-    message_text = "Kunlik sotuvlaringizni kiritishni unutmang! \n\n/add_IMEI orqali IMEI kiritishingiz mumkin!"
+    markup = InlineKeyboardMarkup(row_width=3)
+    # Add a button for each model
+    models = [
+        'V30', 'V29', 'V29e', 'V27', 'V27e', 'V25', 'V25pro', 'V25e',
+        'V23', 'V23e', 'V21', 'V21e', 'Y100', 'Y53S 6GB', 'Y53S 8GB', 'Y36',
+        'Y35', 'Y33S 128GB', 'Y33S 64GB', 'Y31', 'Y27', 'Y27s', 'Y22', 'Y21',
+        'Y17s 4 128', 'Y17s 6 128', 'Y16', 'Y15S', 'Y12S', 'Y03 64GB', 'Y03 128GB',
+        'Y02T', 'Y1S', 'X100'
+    ]
+
+    for model_name in models:
+        record = await db.select_stock(telegram_id=telegram_id, model_name=model_name)
+        model_edited = model_name.replace(" ", "_").replace("/", "_").lower()
+        model_count = record[model_edited]
+        # Buttons for decrementing, showing model name, and incrementing stock
+        model_button = InlineKeyboardButton(f"{model_name} : {model_count}", callback_data="doesn't work")
+        increment_button1 = InlineKeyboardButton("+1", callback_data=f'{model_name},{model_count},1')
+        increment_button10 = InlineKeyboardButton("+10", callback_data=f'{model_name},{model_count},10')
+        markup.add(model_button, increment_button1, increment_button10)
+    return markup
+
+
+async def ask_daily_stock():
+    from loader import dp, db, bot
+    vbas = await db.select_all_vbas()  # Up to 200 user IDs
+    message_text = "Agar yangi telefonlar kelgan bo'lsa, model miqdorini ko'paytiring! :"
     for vba in vbas:
         try:
-            await bot.send_message(vba[5], message_text)
+            user_id = vba[5]  # Assuming vba[5] contains the correct user_id
+            chat_id = user_id  # In private chats, user_id and chat_id are usually the same
+            await bot.send_message(user_id, message_text, reply_markup=await stock_keyboard(user_id))
+            # Properly set the state for the user and chat
+            state = dp.current_state(user=user_id, chat=chat_id)
+            await state.set_state(StockCount.start)
             await asyncio.sleep(0.1)  # Sleep for 100ms between messages
         except Exception as e:
-            print(f"Failed to send message to {vba[5]}: {str(e)}")
-
-
-
+            print(f"Failed to send message to {user_id}: {e}")
 
 
 def schedule_daily_tasks():
@@ -59,11 +90,11 @@ def schedule_daily_tasks():
         id="send_daily_report"
     )
 
-    scheduler.add_job(
-        ask_daily_sales,
-        trigger=CronTrigger(hour=20, minute=0, second=0, timezone=uzb_timezone),
-        replace_existing=True,
-        id="ask_daily_sales"
-    )
+    # scheduler.add_job(
+    #     ask_daily_stock,
+    #     trigger=CronTrigger(hour=17, minute=20, second=0, timezone=uzb_timezone),
+    #     replace_existing=True,
+    #     id="ask_daily_stock"
+    # )
 
     scheduler.start()

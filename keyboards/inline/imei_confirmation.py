@@ -78,7 +78,8 @@ modelY = InlineKeyboardMarkup(
             InlineKeyboardButton("Y36", callback_data="Y36"),
             InlineKeyboardButton(text="Y31", callback_data="Y31"),
         ],
-    ]
+    ],
+    row_width=4
 )
 
 
@@ -103,5 +104,6 @@ modelV = InlineKeyboardMarkup(
             InlineKeyboardButton(text="V25pro", callback_data="V25pro"),
             InlineKeyboardButton(text="V27e", callback_data="V27e"),
         ],
-    ]
+    ],
+    row_width=4
 )

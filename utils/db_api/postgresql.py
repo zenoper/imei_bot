@@ -219,10 +219,26 @@ class Database:
         sql = "SELECT * FROM Stock"
         return await self.execute(sql, fetch=True)
 
-    async def select_stock(self, **kwargs):
-        sql = "SELECT * FROM Stock WHERE "
-        sql, parameters = self.format_args(sql, parameters=kwargs)
-        return await self.execute(sql, *parameters, fetchrow=True)
+    async def select_stock(self, telegram_id, model_name):
+        # Ensure the model name is safe to insert into a query
+        model_name = model_name.replace(" ", "_").replace("/", "_")
+        # You must validate or whitelist the column names to ensure security.
+        allowed_columns = [
+            'V30', 'V29', 'V29e', 'V27', 'V27e', 'V25', 'V25pro', 'V25e',
+            'V23', 'V23e', 'V21', 'V21e', 'Y100', 'Y53S_6GB', 'Y53S_8GB', 'Y36',
+            'Y35', 'Y33S_128GB', 'Y33S_64GB', 'Y31', 'Y27', 'Y27s', 'Y22', 'Y21',
+            'Y17s_4_128', 'Y17s_6_128', 'Y16', 'Y15S', 'Y12S', 'Y03_64GB', 'Y03_128GB',
+            'Y02T', 'Y1S', 'X100'
+        ]
+
+        if model_name not in allowed_columns:
+            raise ValueError("Invalid model name provided")
+
+        # Prepare SQL query with the validated model name
+        sql = f"SELECT {model_name} FROM Stock WHERE telegram_id = $1"
+
+        # Execute the query with the provided telegram_id
+        return await self.execute(sql, telegram_id, fetchrow=True)
 
     async def update_stock_count(self, model_name, count, telegram_id):
         # Safely build the SQL command to prevent SQL injection
