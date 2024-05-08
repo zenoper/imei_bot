@@ -39,7 +39,7 @@ async def send_daily_report():
 
 
 async def stock_keyboard(telegram_id):
-    from loader import db, bot
+    from loader import db
     markup = InlineKeyboardMarkup(row_width=3)
     # Add a button for each model
     models = [
@@ -85,14 +85,14 @@ def schedule_daily_tasks():
 
     scheduler.add_job(
         send_daily_report,
-        trigger=CronTrigger(hour=9, minute=4, second=0, timezone=uzb_timezone),
+        trigger=CronTrigger(hour=9, minute=0, second=0, timezone=uzb_timezone),
         replace_existing=True,
         id="send_daily_report"
     )
 
     # scheduler.add_job(
     #     ask_daily_stock,
-    #     trigger=CronTrigger(hour=17, minute=20, second=0, timezone=uzb_timezone),
+    #     trigger=CronTrigger(hour=11, minute=29, second=0, timezone=uzb_timezone),
     #     replace_existing=True,
     #     id="ask_daily_stock"
     # )

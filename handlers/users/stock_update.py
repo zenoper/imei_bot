@@ -2,37 +2,49 @@ from aiogram.dispatcher.filters.builtin import Command
 import asyncpg.exceptions
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+
 from loader import db, bot, dp
 from states.Userstates import StockCount
-from states.Userstates import AddIMEI, IMEISendAllowance
-from keyboards.default import UserKeyboard
-from aiogram.types import ReplyKeyboardRemove
-from data.config import ADMINS
-from datetime import datetime, date
-from keyboards.inline import imei_confirmation
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-@dp.callback_query_handler(lambda c: c.data and 'increment' in c.data)
-async def process_stock_adjustment(callback_query: types.CallbackQuery):
-    # Split the callback data into model name, current count, and increment value
-    print(callback_query.data)
-    model_name, model_count, increment = callback_query.data.split(',')
-    new_count = int(model_count) + int(increment)
+@dp.callback_query_handler(lambda c: ',' in c.data, state=StockCount.start)
+async def handle_stock_callback(query: CallbackQuery):
+    telegram_id = query.from_user.id
+    models = [
+        'V30', 'V29', 'V29e', 'V27', 'V27e', 'V25', 'V25pro', 'V25e',
+        'V23', 'V23e', 'V21', 'V21e', 'Y100', 'Y53S 6GB', 'Y53S 8GB', 'Y36',
+        'Y35', 'Y33S 128GB', 'Y33S 64GB', 'Y31', 'Y27', 'Y27s', 'Y22', 'Y21',
+        'Y17s 4 128', 'Y17s 6 128', 'Y16', 'Y15S', 'Y12S', 'Y03 64GB', 'Y03 128GB',
+        'Y02T', 'Y1S', 'X100'
+    ]
+    # Extracting model name, current count, and increment value from the callback data
+    data = query.data.split(',')
+    model_name, current_count, increment = data
+    increment = int(increment)
 
-    await db.update_stock_count(model_name=model_name, count=new_count, telegram_id=callback_query.from_user.id)
+    # Fetch the most current stock directly from the database instead of using the old count
+    stock_record = await db.select_stock(telegram_id=query.from_user.id, model_name=model_name)
+    model_key = model_name.replace(" ", "_").replace("/", "_").lower()
+    new_count = stock_record[model_key] + increment
 
-    # Update the inline buttons to reflect the new count
-    markup = InlineKeyboardMarkup()
-    model_button = InlineKeyboardButton(f"{model_name}: {new_count}", callback_data=f'show:{model_name}:{new_count}')
-    increment_button1 = InlineKeyboardButton("+1", callback_data=f'{model_name},{model_count},1')
-    increment_button10 = InlineKeyboardButton("+10", callback_data=f'{model_name},{model_count},10')
-    markup.add(increment_button1, model_button, increment_button10)
+    # Update the database with the new stock count
+    await db.update_stock_count(model_name=model_name, count=new_count, telegram_id=telegram_id)
 
-    await bot.edit_message_text(
-        chat_id=callback_query.message.chat.id,
-        message_id=callback_query.message.message_id,
+    markup = InlineKeyboardMarkup(row_width=3)
+    for model in models:
+        record = await db.select_stock(telegram_id=telegram_id, model_name=model)
+        model_edited = model.replace(" ", "_").replace("/", "_").lower()
+        model_count = record[model_edited]
+        # Buttons for decrementing, showing model name, and incrementing stock
+        model_button = InlineKeyboardButton(f"{model} : {model_count}", callback_data="doesn't work")
+        increment_button1 = InlineKeyboardButton("+1", callback_data=f'{model},{model_count},1')
+        increment_button10 = InlineKeyboardButton("+10", callback_data=f'{model},{model_count},10')
+        markup.add(model_button, increment_button1, increment_button10)
+
+    # Edit the existing message to update text and buttons
+    await query.message.edit_text(
         text="Agar yangi telefonlar kelgan bo'lsa, model miqdorini ko'paytiring! :",
         reply_markup=markup
     )
-    await callback_query.answer()
+    await query.answer()

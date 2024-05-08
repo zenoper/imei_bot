@@ -90,7 +90,6 @@ modelV = InlineKeyboardMarkup(
             InlineKeyboardButton(text="V29", callback_data="V29"),
             InlineKeyboardButton(text="V29e", callback_data="V29e"),
             InlineKeyboardButton(text="V27", callback_data="V27"),
-            InlineKeyboardButton(text="Y27s", callback_data="Y27s"),
         ],
         [
             InlineKeyboardButton(text="V21e", callback_data="V21e"),

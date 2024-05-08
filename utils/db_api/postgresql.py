@@ -221,7 +221,7 @@ class Database:
 
     async def select_stock(self, telegram_id, model_name):
         # Ensure the model name is safe to insert into a query
-        model_name = model_name.replace(" ", "_").replace("/", "_")
+        model_name_edited = model_name.replace(" ", "_").replace("/", "_")
         # You must validate or whitelist the column names to ensure security.
         allowed_columns = [
             'V30', 'V29', 'V29e', 'V27', 'V27e', 'V25', 'V25pro', 'V25e',
@@ -231,11 +231,11 @@ class Database:
             'Y02T', 'Y1S', 'X100'
         ]
 
-        if model_name not in allowed_columns:
+        if model_name_edited not in allowed_columns:
             raise ValueError("Invalid model name provided")
 
         # Prepare SQL query with the validated model name
-        sql = f"SELECT {model_name} FROM Stock WHERE telegram_id = $1"
+        sql = f"SELECT {model_name_edited} FROM Stock WHERE telegram_id = $1"
 
         # Execute the query with the provided telegram_id
         return await self.execute(sql, telegram_id, fetchrow=True)
