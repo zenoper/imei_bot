@@ -138,7 +138,7 @@ class Database:
 
     async def join_tables_and_export(self):
 
-        yesterday = datetime.now() - timedelta(days=1)
+        yesterday = datetime.now() - timedelta(days=2)
         yesterday_date = yesterday.strftime('%Y-%m-%d')
         join_query = f"""
                 SELECT VBA.full_name, VBA.shop_name, IMEI.Model, IMEI.Date_month, IMEI.Time_day 
@@ -152,7 +152,6 @@ class Database:
                 if result:
                     column_names = ['full_name', 'shop_name', 'model', 'date_month', 'time_day']
                     df = pd.DataFrame([dict(rec) for rec in result], columns=column_names)
-
                     return df
                 else:
                     print("No data found for the specified date.")
@@ -165,6 +164,7 @@ class Database:
         CREATE TABLE IF NOT EXISTS Stock (
             telegram_id BIGINT NOT NULL UNIQUE,
             shop_name VARCHAR(255) NOT NULL,
+            X100 INTEGER NOT NULL DEFAULT 0,
             V30 INTEGER NOT NULL DEFAULT 0,
             V29 INTEGER NOT NULL DEFAULT 0,
             V29e INTEGER NOT NULL DEFAULT 0,
@@ -175,8 +175,6 @@ class Database:
             V25e INTEGER NOT NULL DEFAULT 0,
             V23 INTEGER NOT NULL DEFAULT 0,
             V23e INTEGER NOT NULL DEFAULT 0,
-            V21 INTEGER NOT NULL DEFAULT 0,
-            V21e INTEGER NOT NULL DEFAULT 0,
             Y100 INTEGER NOT NULL DEFAULT 0,
             Y53S_6GB INTEGER NOT NULL DEFAULT 0,
             Y53S_8GB INTEGER NOT NULL DEFAULT 0,
@@ -184,21 +182,16 @@ class Database:
             Y35 INTEGER NOT NULL DEFAULT 0,
             Y33S_128GB INTEGER NOT NULL DEFAULT 0,
             Y33S_64GB INTEGER NOT NULL DEFAULT 0,
-            Y31 INTEGER NOT NULL DEFAULT 0,
             Y27 INTEGER NOT NULL DEFAULT 0,
             Y27s INTEGER NOT NULL DEFAULT 0,
             Y22 INTEGER NOT NULL DEFAULT 0,
-            Y21 INTEGER NOT NULL DEFAULT 0,
             Y17s_4_128 INTEGER NOT NULL DEFAULT 0,
             Y17s_6_128 INTEGER NOT NULL DEFAULT 0,
             Y16 INTEGER NOT NULL DEFAULT 0,
             Y15S INTEGER NOT NULL DEFAULT 0,
-            Y12S INTEGER NOT NULL DEFAULT 0,
             Y03_64GB INTEGER NOT NULL DEFAULT 0,
             Y03_128GB INTEGER NOT NULL DEFAULT 0,
-            Y02T INTEGER NOT NULL DEFAULT 0,
-            Y1S INTEGER NOT NULL DEFAULT 0,
-            X100 INTEGER NOT NULL DEFAULT 0
+            Y02T INTEGER NOT NULL DEFAULT 0
         );
         """
         await self.execute(sql, execute=True)
@@ -225,10 +218,10 @@ class Database:
         # You must validate or whitelist the column names to ensure security.
         allowed_columns = [
             'V30', 'V29', 'V29e', 'V27', 'V27e', 'V25', 'V25pro', 'V25e',
-            'V23', 'V23e', 'V21', 'V21e', 'Y100', 'Y53S_6GB', 'Y53S_8GB', 'Y36',
-            'Y35', 'Y33S_128GB', 'Y33S_64GB', 'Y31', 'Y27', 'Y27s', 'Y22', 'Y21',
-            'Y17s_4_128', 'Y17s_6_128', 'Y16', 'Y15S', 'Y12S', 'Y03_64GB', 'Y03_128GB',
-            'Y02T', 'Y1S', 'X100'
+            'V23', 'V23e', 'Y100', 'Y53S_6GB', 'Y53S_8GB', 'Y36',
+            'Y35', 'Y33S_128GB', 'Y33S_64GB', 'Y27', 'Y27s', 'Y22',
+            'Y17s_4_128', 'Y17s_6_128', 'Y16', 'Y15S', 'Y03_64GB', 'Y03_128GB',
+            'Y02T', 'X100'
         ]
 
         if model_name_edited not in allowed_columns:
@@ -236,7 +229,6 @@ class Database:
 
         # Prepare SQL query with the validated model name
         sql = f"SELECT {model_name_edited} FROM Stock WHERE telegram_id = $1"
-
         # Execute the query with the provided telegram_id
         return await self.execute(sql, telegram_id, fetchrow=True)
 
@@ -247,10 +239,10 @@ class Database:
         # You must validate or whitelist the column names to ensure security.
         allowed_columns = [
             'V30', 'V29', 'V29e', 'V27', 'V27e', 'V25', 'V25pro', 'V25e',
-            'V23', 'V23e', 'V21', 'V21e', 'Y100', 'Y53S_6GB', 'Y53S_8GB', 'Y36',
-            'Y35', 'Y33S_128GB', 'Y33S_64GB', 'Y31', 'Y27', 'Y27s', 'Y22', 'Y21',
-            'Y17s_4_128', 'Y17s_6_128', 'Y16', 'Y15S', 'Y12S', 'Y03_64GB', 'Y03_128GB',
-            'Y02T', 'Y1S', 'X100'
+            'V23', 'V23e', 'Y100', 'Y53S_6GB', 'Y53S_8GB', 'Y36',
+            'Y35', 'Y33S_128GB', 'Y33S_64GB', 'Y27', 'Y27s', 'Y22',
+            'Y17s_4_128', 'Y17s_6_128', 'Y16', 'Y15S', 'Y03_64GB', 'Y03_128GB',
+            'Y02T', 'X100'
         ]
 
         if model_name not in allowed_columns:

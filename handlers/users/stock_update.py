@@ -9,10 +9,17 @@ from states.Userstates import StockCount
 from utils.send_report import stock_keyboard
 
 
+@dp.callback_query_handler(lambda c: c.data == 'confirmation', state=StockCount.start)
+async def confirmation_handler(callback_query: types.CallbackQuery, state: FSMContext):
+    # Deleting the message
+    await bot.delete_message(chat_id=callback_query.message.chat.id,
+                             message_id=callback_query.message.message_id)
+    await state.finish()
+
+
 @dp.callback_query_handler(lambda c: ',' in c.data, state=StockCount.start)
 async def handle_stock_callback(query: CallbackQuery):
     telegram_id = query.from_user.id
-
     # Extracting model name, current count, and increment value from the callback data
     data = query.data.split(',')
     model, current_count, increment = data

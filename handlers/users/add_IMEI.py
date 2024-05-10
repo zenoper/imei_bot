@@ -19,7 +19,7 @@ reader = easyocr.Reader(['en'])
 DOWNLOAD_DIRECTORY = '/Users/bez/Desktop/IMEI bot2/utils/photos/'
 
 
-@dp.message_handler(Command(["add_IMEI"]))
+@dp.message_handler(Command(["add_IMEI"]), state="*")
 async def add(message: types.Message, state: FSMContext):
     telegram_id = message.from_user.id
     vba = await db.select_vba(telegram_id=telegram_id)
@@ -42,14 +42,17 @@ async def add(message: types.Message, state: FSMContext):
     result = reader.readtext(file_path, detail=0, paragraph=True)
     text_str = ' '.join(result)
     match = re.search(r'\d{15}', text_str)
-    IMEI = match.group(0)
-    await state.update_data({
-        "IMEI": IMEI,
-        "sticker": photo_id
-    })
-    await message.answer(f"Rasmdagi shu raqammi? -> \n\n<b>IMEI1: {IMEI}</b> \n\n?",
-                         reply_markup=imei_confirmation.confirmation_keyboard)
-    await AddIMEI.IMEI_confirm.set()
+    if match is None:
+        await message.answer("Rasmda IMEI ko'rsatilmagan! \n\nQaytadan rasmga oling!")
+    else:
+        IMEI = match.group(0)
+        await state.update_data({
+            "IMEI": IMEI,
+            "sticker": photo_id
+        })
+        await message.answer(f"Rasmdagi shu raqammi? -> \n\n<b>IMEI1: {IMEI}</b> \n\n?",
+                             reply_markup=imei_confirmation.confirmation_keyboard)
+        await AddIMEI.IMEI_confirm.set()
 
 
 @dp.message_handler(state=AddIMEI.photo, content_types=types.ContentTypes.ANY)
@@ -149,18 +152,9 @@ async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
     Model = str(data.get("model"))
     Telegram_id = data.get("telegram_id")
 
-    try:
-         await db.update_stock_count(
-            model_name=Model,
-            count=5,
-            telegram_id=Telegram_id,
-        )
-    except Exception as e:
-        msg = f"There has been some error in updating stock count! \n\n{e}"
-        await bot.send_message(chat_id=ADMINS[0], text=msg)
-    else:
-        msg = f"Stock Count has been successfully updated!"
-        await bot.send_message(chat_id=ADMINS[0], text=msg)
+    stock_count = await db.select_stock(telegram_id=Telegram_id, model_name=Model)
+    model_key = Model.replace(" ", "_").replace("/", "_").lower()
+    new_count = int(stock_count[model_key]) - 1
 
     try:
         imei = await db.add_imei(
@@ -183,6 +177,19 @@ async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
         count = await db.count_imei()
         msg = f"IMEI '{imei[1]}' has been added to the database! We now have {count} IMEIs"
         await bot.send_message(chat_id=ADMINS[0], text=msg)
+
+        try:
+            await db.update_stock_count(
+                model_name=Model,
+                count=new_count,
+                telegram_id=Telegram_id,
+            )
+        except Exception as e:
+            msg = f"There has been some error in updating stock count! \n\n{e}"
+            await bot.send_message(chat_id=ADMINS[0], text=msg)
+        else:
+            msg = f"Stock Count has been successfully decreased!"
+            await bot.send_message(chat_id=ADMINS[0], text=msg)
 
         await call.message.answer("Rahmat, IMEI muvaffaqiyatli saqlandi! 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
         await state.finish()

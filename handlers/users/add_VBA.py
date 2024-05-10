@@ -187,5 +187,3 @@ async def edit(message: types.Message):
 @dp.message_handler(content_types=types.ContentTypes.ANY, state=VBAInfo.confirmation)
 async def confirmation(message: types.Message):
     await message.answer("Iltimos, tugmalardan birini bosing!", reply_markup=UserKeyboard.confirmation)
-
-
