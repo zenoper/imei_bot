@@ -6,7 +6,7 @@ env.read_env()
 BOT_TOKEN = env.str("BOT_TOKEN")
 ADMINS = env.list("ADMINS")
 HR = env.list("HR")
-IP = env.str("ip")
+
 
 
 DB_USER = env.str("DB_USER")
