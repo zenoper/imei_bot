@@ -96,7 +96,7 @@ def schedule_daily_tasks():
 
     scheduler.add_job(
         ask_daily_stock,
-        trigger=CronTrigger(hour=11, minute=29, second=0, timezone=uzb_timezone),
+        trigger=CronTrigger(hour=19, minute=00, second=0, timezone=uzb_timezone),
         replace_existing=True,
         id="ask_daily_stock"
     )
