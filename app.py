@@ -20,7 +20,7 @@ async def on_startup(dispatcher):
     await on_startup_notify(dispatcher)
     schedule_daily_tasks()
     # await ask_daily_stock()
-    await send_daily_report()
+    # await send_daily_report()
 
 
 if __name__ == '__main__':
