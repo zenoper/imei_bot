@@ -138,7 +138,7 @@ class Database:
 
     async def join_tables_and_export(self):
 
-        yesterday = datetime.now() - timedelta(days=2)
+        yesterday = datetime.now() - timedelta(days=1)
         yesterday_date = yesterday.strftime('%Y-%m-%d')
         join_query = f"""
                 SELECT VBA.full_name, VBA.shop_name, IMEI.Model, IMEI.Date_month, IMEI.Time_day 
@@ -154,7 +154,27 @@ class Database:
                     df = pd.DataFrame([dict(rec) for rec in result], columns=column_names)
                     return df
                 else:
-                    print("No data found for the specified date.")
+                    return None
+                
+    # IMEI Sell OUT
+    async def imei_report(self):
+
+        today = datetime.now() - timedelta(days=0)
+        today_date = today.strftime('%Y-%m-%d')
+        join_query = f"""
+                SELECT VBA.full_name, VBA.shop_name, VBA.employee_id, IMEI.IMEI, IMEI.Model, IMEI.Date_month, IMEI.Time_day 
+                FROM VBA
+                JOIN IMEI ON VBA.telegram_id = IMEI.Telegram_id 
+                WHERE IMEI.Date_month = '{today_date}';
+                """
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                result = await connection.fetch(join_query)
+                if result:
+                    column_names = ['full_name', 'shop_name',  'employee_id', 'imei', 'model', 'date_month', 'time_day']
+                    df = pd.DataFrame([dict(rec) for rec in result], columns=column_names)
+                    return df
+                else:
                     return None
 
 # TABLE STOCK

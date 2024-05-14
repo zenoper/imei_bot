@@ -10,15 +10,41 @@ from aiogram.dispatcher import FSMContext
 import pandas as pd
 from io import BytesIO
 
-from data.config import HR
+from data.config import ADMINS, HR
 from states.Userstates import StockCount
+
+
+async def send_daily_report_imei():
+    from loader import db, bot
+    # Generate an in-memory Excel file
+    excel_file = await db.imei_report()
+    print(excel_file)
+    if excel_file is not None:
+        # Create a BytesIO object to store the Excel file in memory
+        output = BytesIO()
+        # Use the ExcelWriter context manager to write the DataFrame to Excel
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            excel_file.to_excel(writer, index=False)
+        output.seek(0)
+
+        # Extract bytes to reuse for each user
+        excel_bytes = output.getvalue()
+
+        # Send the document to all users in HR
+        user_output = BytesIO(excel_bytes)  # Create a new BytesIO object for each user
+        user_output.seek(0)
+        document = InputFile(user_output, filename="DailyIMEIReport.xlsx")
+        await bot.send_document(chat_id=ADMINS[0], document=document, caption="Here's your daily report.")
+        user_output.close()  # Close the BytesIO object
+    else:
+        await bot.send_message(chat_id=ADMINS[0], text="No IMEI submitted today for Sales Volume Upload :(")
 
 
 async def send_daily_report():
     from loader import db, bot
     # Generate an in-memory Excel file
     excel_file = await db.join_tables_and_export()
-    if not excel_file.empty:
+    if excel_file is not None:
         # Create a BytesIO object to store the Excel file in memory
         output = BytesIO()
         # Use the ExcelWriter context manager to write the DataFrame to Excel
@@ -78,7 +104,7 @@ async def ask_daily_stock():
             # Properly set the state for the user and chat
             state = dp.current_state(user=user_id, chat=chat_id)
             await state.set_state(StockCount.start)
-            await asyncio.sleep(0.1)  # Sleep for 100ms between messages
+            await asyncio.sleep(0.2)  # Sleep for 100ms between messages
         except Exception as e:
             print(f"Failed to send message to {user_id}: {e}")
 
@@ -87,18 +113,25 @@ def schedule_daily_tasks():
     scheduler = AsyncIOScheduler()
     uzb_timezone = timezone('Asia/Tashkent')
 
-    # scheduler.add_job(
-    #     send_daily_report,
-    #     trigger=CronTrigger(hour=9, minute=0, second=0, timezone=uzb_timezone),
-    #     replace_existing=True,
-    #     id="send_daily_report"
-    # )
+    scheduler.add_job(
+        send_daily_report,
+        trigger=CronTrigger(hour=9, minute=0, second=0, timezone=uzb_timezone),
+        replace_existing=True,
+        id="send_daily_report"
+    )
 
     scheduler.add_job(
         ask_daily_stock,
         trigger=CronTrigger(hour=19, minute=00, second=0, timezone=uzb_timezone),
         replace_existing=True,
         id="ask_daily_stock"
+    )
+
+    scheduler.add_job(
+        send_daily_report_imei,
+        trigger=CronTrigger(hour=17, minute=0, second=0, timezone=uzb_timezone),
+        replace_existing=True,
+        id="send_daily_report_imei"
     )
 
     scheduler.start()

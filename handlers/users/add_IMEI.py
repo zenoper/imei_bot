@@ -155,6 +155,8 @@ async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
     stock_count = await db.select_stock(telegram_id=Telegram_id, model_name=Model)
     model_key = Model.replace(" ", "_").replace("/", "_").lower()
     new_count = int(stock_count[model_key]) - 1
+    if int(stock_count[model_key]) == 0:
+        new_count = 0
 
     try:
         imei = await db.add_imei(
