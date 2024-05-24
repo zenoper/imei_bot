@@ -1,12 +1,9 @@
-from aiogram.dispatcher import FSMContext
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
 import asyncio
 
 from aiogram.types import InputFile, InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram import types
-from aiogram.dispatcher import FSMContext
 import pandas as pd
 from io import BytesIO
 
@@ -18,7 +15,6 @@ async def send_daily_report_imei():
     from loader import db, bot
     # Generate an in-memory Excel file
     excel_file = await db.imei_report()
-    print(excel_file)
     if excel_file is not None:
         # Create a BytesIO object to store the Excel file in memory
         output = BytesIO()

@@ -156,26 +156,26 @@ async def confirmation(message: types.Message, state: FSMContext):
     else:
         msg = f"A new VBA has been added to stock database!"
         await bot.send_message(chat_id=ADMINS[0], text=msg)
-    try:
-        user = await db.add_vba(
-            full_name=data.get("fullname"),
-            employee_id=data.get("employee_id"),
-            shop_name=shop_name,
-            phone_number=data.get("phone_number"),
-            telegram_id=telegram_id,
-        )
-    except asyncpg.exceptions.UniqueViolationError:
-        user = await db.select_vba(telegram_id=int(data.get("telegram_id")))
-        await message.answer(f"Unique Violation error. Employee ID ({user[2]}) raqam ({user[4]}) yoki telegram id ({user[5]}) database da mavjud! \n\nTahrirlang...", reply_markup=UserKeyboard.confirmation)
-    except Exception as e:
-        await message.answer(f"Error : {e}. \n\nTry editing (Tahrirlang)", reply_markup=UserKeyboard.confirmation)
-    else:
-        count = await db.count_vbas()
-        msg = f"User '{user[1]}' has been added to the VBA database! We have {count} VBAs."
-        await bot.send_message(chat_id=ADMINS[0], text=msg)
+        try:
+            user = await db.add_vba(
+                full_name=data.get("fullname"),
+                employee_id=data.get("employee_id"),
+                shop_name=shop_name,
+                phone_number=data.get("phone_number"),
+                telegram_id=telegram_id,
+            )
+        except asyncpg.exceptions.UniqueViolationError:
+            user = await db.select_vba(telegram_id=int(data.get("telegram_id")))
+            await message.answer(f"Unique Violation error. Employee ID ({user[2]}) raqam ({user[4]}) yoki telegram id ({user[5]}) database da mavjud! \n\nTahrirlang...", reply_markup=UserKeyboard.confirmation)
+        except Exception as e:
+            await message.answer(f"Error : {e}. \n\nTry editing (Tahrirlang)", reply_markup=UserKeyboard.confirmation)
+        else:
+            count = await db.count_vbas()
+            msg = f"User '{user[1]}' has been added to the VBA database! We have {count} VBAs."
+            await bot.send_message(chat_id=ADMINS[0], text=msg)
 
-        await message.answer("Rahmat, endi VBA botdan foydalanishi mumkin 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
-        await state.finish()
+            await message.answer("Rahmat, endi VBA botdan foydalanishi mumkin 🙂", reply_markup=ReplyKeyboardRemove(selective=True))
+            await state.finish()
 
 
 @dp.message_handler(text="Tahrirlash ✏️", content_types=types.ContentTypes.TEXT, state=VBAInfo.confirmation)

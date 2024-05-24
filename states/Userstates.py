@@ -20,6 +20,11 @@ class AddIMEI(StatesGroup):
     confirmation = State()
 
 
+class AddVBAList(StatesGroup):
+    file = State()
+    finish = State()
+
+
 class StockCount(StatesGroup):
     start = State()
     confirmation = State()
