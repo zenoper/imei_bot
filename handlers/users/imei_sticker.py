@@ -47,7 +47,7 @@ async def add(message: types.Message, state: FSMContext):
     with open(temp_file_path, 'wb') as f:
         f.write(downloaded_file.getvalue())
 
-    df = pd.read_excel('vba_file.xlsx')
+    df = pd.read_excel(temp_file_path)
 
     try:
         # Iterate over the rows
