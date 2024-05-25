@@ -52,6 +52,9 @@ async def add(message: types.Message, state: FSMContext):
         })
         await message.answer(f"Rasmdagi shu raqammi? -> \n\n<b>IMEI1: {IMEI}</b> \n\n?",
                              reply_markup=imei_confirmation.confirmation_keyboard)
+        if os.path.exists('/Users/bez/Desktop/IMEI bot2/utils/photos/vivo.jpg'):
+            os.remove('/Users/bez/Desktop/IMEI bot2/utils/photos/vivo.jpg')
+            await bot.send_message(chat_id=ADMINS[0], text="File removed from server")
         await AddIMEI.IMEI_confirm.set()
 
 

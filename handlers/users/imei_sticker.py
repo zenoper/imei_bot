@@ -69,6 +69,7 @@ async def add(message: types.Message, state: FSMContext):
             await asyncio.sleep(0.1)
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+            await message.answer("File removed from server")
             # Finish the state
         await state.finish()
         # Send a confirmation message to the user
