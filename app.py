@@ -10,7 +10,7 @@ from utils.send_report import schedule_daily_tasks, send_daily_report_imei
 async def on_startup(dispatcher):
     await db.create()
     # await db.drop_vbas()
-    # await db.drop_imei()
+    await db.drop_imei()
     # await db.drop_stock()
     await db.create_table_vba()
     await db.create_table_imei()

@@ -55,18 +55,19 @@ modelY = InlineKeyboardMarkup(
             InlineKeyboardButton("Y02T", callback_data="Y02T"),
             InlineKeyboardButton("Y03 64GB", callback_data="Y03 64GB"),
             InlineKeyboardButton("Y03 128GB", callback_data="Y03 128GB"),
-            InlineKeyboardButton(text="Y15S", callback_data="Y15S"),
-
         ],
         [
+            InlineKeyboardButton(text="Y15S", callback_data="Y15S"),
             InlineKeyboardButton(text="Y16", callback_data="Y16"),
             InlineKeyboardButton("Y17s 4/128", callback_data="Y17s 4/128"),
+        ],
+        [
             InlineKeyboardButton("Y17s 6/128", callback_data="Y17s 6/128"),
             InlineKeyboardButton(text="Y22", callback_data="Y22"),
+            InlineKeyboardButton(text="Y27", callback_data="Y27"),
 
         ],
         [
-            InlineKeyboardButton(text="Y27", callback_data="Y27"),
             InlineKeyboardButton("Y27s", callback_data="Y27s"),
             InlineKeyboardButton(text="Y33S 64GB", callback_data="Y33S 64GB"),
             InlineKeyboardButton(text="Y33S 128GB", callback_data="Y33S 128GB"),
@@ -75,6 +76,8 @@ modelY = InlineKeyboardMarkup(
             InlineKeyboardButton(text="Y35", callback_data="Y35"),
             InlineKeyboardButton("Y36", callback_data="Y36"),
             InlineKeyboardButton(text="Y53S 6GB", callback_data="Y53S 6GB"),
+        ],
+        [
             InlineKeyboardButton(text="Y53S 8GB", callback_data="Y53S 8GB"),
             InlineKeyboardButton("Y100", callback_data="Y100"),
         ],

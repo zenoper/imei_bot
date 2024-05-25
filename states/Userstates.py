@@ -22,7 +22,10 @@ class AddIMEI(StatesGroup):
 
 class AddVBAList(StatesGroup):
     file = State()
-    finish = State()
+
+
+class RemoveIMEI(StatesGroup):
+    IMEI = State()
 
 
 class StockCount(StatesGroup):

@@ -2,7 +2,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import Command
 from aiogram import types
 from loader import db, dp, bot
-from states.Userstates import Sticker, AddVBAList
+from states.Userstates import Sticker, AddVBAList, RemoveIMEI
 from data.config import ADMINS
 
 
@@ -80,6 +80,29 @@ async def add(message: types.Message, state: FSMContext):
 @dp.message_handler(state=AddVBAList.file, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
 async def add(message: types.Message):
     await message.answer("Send file")
+
+
+@dp.message_handler(Command(["remove_imei"]), state='*', chat_id=ADMINS[0])
+async def search(message: types.Message):
+    await message.answer("Send IMEI")
+    await RemoveIMEI.IMEI.set()
+
+
+@dp.message_handler(state=RemoveIMEI.IMEI, chat_id=ADMINS[0], content_types=types.ContentTypes.TEXT)
+async def search(message: types.Message):
+    IMEI = str(message.text)
+    try:
+        await db.delete_imei(imei=IMEI)
+    except Exception as e:
+        await message.reply(f"Error: {e}")
+    else:
+        await message.reply("IMEI successfully removed!")
+
+
+@dp.message_handler(state=RemoveIMEI.IMEI, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
+async def search(message: types.Message):
+    await message.answer("Send IMEI in text")
+
 
 
 

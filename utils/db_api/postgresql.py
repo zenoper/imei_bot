@@ -130,8 +130,10 @@ class Database:
         sql = "SELECT COUNT(*) FROM IMEI"
         return await self.execute(sql, fetchval=True)
 
-    async def delete_imei(self):
-        await self.execute("DELETE FROM IMEI WHERE TRUE", execute=True)
+    async def delete_imei(self, **kwargs):
+        sql = "DELETE FROM IMEI WHERE TRUE"
+        sql, parameters = self.format_args(sql, parameters=kwargs)
+        return await self.execute(sql, *parameters, execute=True)
 
     async def drop_imei(self):
         await self.execute("DROP TABLE IMEI", execute=True)
