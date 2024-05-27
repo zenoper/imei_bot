@@ -17,7 +17,8 @@ async def bot_help(message: types.Message):
                 "/add_IMEI - IMEI qo'shish",
                 "/add_VBA_list - VBA list qo'shish",
                 "/search_sticker - Search sticker",
-                "/remove_imei - Remove IMEI"
+                "/remove_imei - Remove IMEI",
+                "/update_telegramID - you know it"
                 )
         await message.answer("\n".join(text))
     elif ad_hr_id in HR:

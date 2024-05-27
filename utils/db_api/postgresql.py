@@ -79,9 +79,9 @@ class Database:
         sql = "SELECT COUNT(*) FROM VBA"
         return await self.execute(sql, fetchval=True)
 
-    async def update_vba_username(self, username, telegram_id):
-        sql = "UPDATE VBA SET username=$1 WHERE telegram_id=$2"
-        return await self.execute(sql, username, telegram_id, execute=True)
+    async def update_vba_telegram_id(self, telegram_id, employee_id):
+        sql = "UPDATE VBA SET telegram_id=$1 WHERE employee_id=$2"
+        return await self.execute(sql, telegram_id, employee_id, execute=True)
 
     async def delete_vba(self):
         await self.execute("DELETE FROM VBA WHERE TRUE", execute=True)
@@ -130,10 +130,19 @@ class Database:
         sql = "SELECT COUNT(*) FROM IMEI"
         return await self.execute(sql, fetchval=True)
 
-    async def delete_imei(self, **kwargs):
-        sql = "DELETE FROM IMEI WHERE TRUE"
-        sql, parameters = self.format_args(sql, parameters=kwargs)
-        return await self.execute(sql, *parameters, execute=True)
+    # async def delete_imei(self, IMEI):
+    #     # Base delete statement with a trailing space to ensure proper concatenation
+    #     sql = "DELETE FROM IMEI WHERE TRUE AND $1=IMEI"
+    #
+    #     # Format the SQL query with parameters using the provided format_args method
+    #     sql, parameters = self.format_args(sql, parameters=kwargs)
+    #
+    #     # Execute the formatted query
+    #     return await self.execute(sql, *parameters, execute=True)
+
+    async def delete_imei(self, IMEI):
+        sql = "DELETE FROM IMEI WHERE IMEI=$1"
+        return await self.execute(sql, IMEI, execute=True)
 
     async def drop_imei(self):
         await self.execute("DROP TABLE IMEI", execute=True)

@@ -2,7 +2,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import Command
 from aiogram import types
 from loader import db, dp, bot
-from states.Userstates import Sticker, AddVBAList, RemoveIMEI
+from states.Userstates import Sticker, AddVBAList, RemoveIMEI, UpdateTelegramID
 from data.config import ADMINS
 
 
@@ -90,19 +90,60 @@ async def search(message: types.Message):
 
 
 @dp.message_handler(state=RemoveIMEI.IMEI, chat_id=ADMINS[0], content_types=types.ContentTypes.TEXT)
-async def search(message: types.Message):
+async def search(message: types.Message, state: FSMContext):
     IMEI = str(message.text)
     try:
-        await db.delete_imei(imei=IMEI)
+        await db.delete_imei(IMEI=IMEI)
     except Exception as e:
         await message.reply(f"Error: {e}")
     else:
         await message.reply("IMEI successfully removed!")
+        await state.finish()
 
 
 @dp.message_handler(state=RemoveIMEI.IMEI, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
 async def search(message: types.Message):
     await message.answer("Send IMEI in text")
+
+
+@dp.message_handler(Command(["update_telegramID"]), state='*', chat_id=ADMINS[0])
+async def search(message: types.Message):
+    await message.answer("Send Employee ID in text")
+    await UpdateTelegramID.employeeID.set()
+
+
+@dp.message_handler(state=UpdateTelegramID.employeeID, chat_id=ADMINS[0], content_types=types.ContentTypes.TEXT)
+async def search(message: types.Message, state: FSMContext):
+    employee_id = str(message.text)
+    await state.update_data({
+        "employeeID": employee_id
+    })
+    await message.answer("Send new telegram ID")
+    await UpdateTelegramID.telegramID.set()
+
+
+@dp.message_handler(state=UpdateTelegramID.employeeID, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
+async def search(message: types.Message):
+    await message.answer("Send Employee ID in text")
+
+
+@dp.message_handler(state=UpdateTelegramID.telegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.TEXT)
+async def search(message: types.Message, state: FSMContext):
+    telegram_id = str(message.text)
+    data = await state.get_data()
+    employee_id = str(data.get("employeeID"))
+    try:
+        await db.update_vba_telegram_id(telegram_id=int(telegram_id), employee_id=employee_id)
+    except Exception as e:
+        await message.reply(f"Error: {e}")
+    else:
+        await message.reply("Telegram ID successfully updated!")
+        await state.finish()
+
+
+@dp.message_handler(state=UpdateTelegramID.telegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
+async def search(message: types.Message):
+    await message.answer("Send telegram ID in text")
 
 
 

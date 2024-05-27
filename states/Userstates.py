@@ -28,6 +28,11 @@ class RemoveIMEI(StatesGroup):
     IMEI = State()
 
 
+class UpdateTelegramID(StatesGroup):
+    employeeID = State()
+    telegramID = State()
+
+
 class StockCount(StatesGroup):
     start = State()
     confirmation = State()
