@@ -188,6 +188,23 @@ class Database:
                 else:
                     return None
 
+
+    async def imei_report_all(self):
+        join_query = f"""
+                SELECT VBA.full_name, VBA.shop_name, VBA.employee_id, IMEI.IMEI, IMEI.Model, IMEI.Date_month, IMEI.Time_day 
+                FROM VBA
+                JOIN IMEI ON VBA.telegram_id = IMEI.Telegram_id 
+                """
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                result = await connection.fetch(join_query)
+                if result:
+                    column_names = ['full_name', 'shop_name',  'employee_id', 'imei', 'model', 'date_month', 'time_day']
+                    df = pd.DataFrame([dict(rec) for rec in result], columns=column_names)
+                    return df
+                else:
+                    return None
+
 # TABLE STOCK
 
     async def create_table_stock_count(self):

@@ -4,8 +4,9 @@ from aiogram import types
 from loader import db, dp, bot
 from states.Userstates import Sticker, AddVBAList, RemoveIMEI, UpdateTelegramID
 from data.config import ADMINS
+from aiogram.types import InputFile
 
-
+from io import BytesIO
 import pandas as pd
 import asyncio
 import os
@@ -145,6 +146,29 @@ async def search(message: types.Message, state: FSMContext):
 async def search(message: types.Message):
     await message.answer("Send telegram ID in text")
 
+
+@dp.message_handler(Command(["get_all_IMEI"]), state='*', chat_id=ADMINS[0])
+async def search(message: types.Message):
+    excel_file = await db.imei_report_all()
+    if excel_file is not None:
+        # Create a BytesIO object to store the Excel file in memory
+        output = BytesIO()
+        # Use the ExcelWriter context manager to write the DataFrame to Excel
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            excel_file.to_excel(writer, index=False)
+        output.seek(0)
+
+        # Extract bytes to reuse for each user
+        excel_bytes = output.getvalue()
+
+        # Send the document to all users in HR
+        user_output = BytesIO(excel_bytes)  # Create a new BytesIO object for each user
+        user_output.seek(0)
+        document = InputFile(user_output, filename="AllIMEIReport.xlsx")
+        await bot.send_document(chat_id=ADMINS[0], document=document, caption="Here's your ALL IMEI report.")
+        user_output.close()  # Close the BytesIO object
+    else:
+        await bot.send_message(chat_id=ADMINS[0], text="No IMEI :(")
 
 
 
