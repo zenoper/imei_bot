@@ -30,7 +30,8 @@ class RemoveIMEI(StatesGroup):
 
 class UpdateTelegramID(StatesGroup):
     employeeID = State()
-    telegramID = State()
+    oldtelegramID = State()
+    newtelegramID = State()
 
 
 class StockCount(StatesGroup):

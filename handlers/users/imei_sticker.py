@@ -119,8 +119,8 @@ async def search(message: types.Message, state: FSMContext):
     await state.update_data({
         "employeeID": employee_id
     })
-    await message.answer("Send new telegram ID")
-    await UpdateTelegramID.telegramID.set()
+    await message.answer("Send old telegram ID")
+    await UpdateTelegramID.oldtelegramID.set()
 
 
 @dp.message_handler(state=UpdateTelegramID.employeeID, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
@@ -128,13 +128,30 @@ async def search(message: types.Message):
     await message.answer("Send Employee ID in text")
 
 
-@dp.message_handler(state=UpdateTelegramID.telegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.TEXT)
+@dp.message_handler(state=UpdateTelegramID.oldtelegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.TEXT)
 async def search(message: types.Message, state: FSMContext):
-    telegram_id = str(message.text)
+    old_telegram_id = str(message.text)
+    await state.update_data({
+        "old_telegram_id": old_telegram_id
+    })
+    await message.answer("Send new telegram ID")
+    await UpdateTelegramID.newtelegramID.set()
+
+
+@dp.message_handler(state=UpdateTelegramID.oldtelegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
+async def search(message: types.Message):
+    await message.answer("Send telegram ID in text")
+
+
+@dp.message_handler(state=UpdateTelegramID.newtelegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.TEXT)
+async def search(message: types.Message, state: FSMContext):
+    new_telegram_id = str(message.text)
     data = await state.get_data()
     employee_id = str(data.get("employeeID"))
+    old_telegram_id = str(data.get("old_telegram_id"))
     try:
-        await db.update_vba_telegram_id(telegram_id=int(telegram_id), employee_id=employee_id)
+        await db.update_vba_telegram_id(telegram_id=int(new_telegram_id), employee_id=employee_id)
+        await db.update_stock_telegram_id(new_telegram_id=int(new_telegram_id), old_telegram_id=int(old_telegram_id))
     except Exception as e:
         await message.reply(f"Error: {e}")
     else:
@@ -142,7 +159,7 @@ async def search(message: types.Message, state: FSMContext):
         await state.finish()
 
 
-@dp.message_handler(state=UpdateTelegramID.telegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
+@dp.message_handler(state=UpdateTelegramID.newtelegramID, chat_id=ADMINS[0], content_types=types.ContentTypes.ANY)
 async def search(message: types.Message):
     await message.answer("Send telegram ID in text")
 

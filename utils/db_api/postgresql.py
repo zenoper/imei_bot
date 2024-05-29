@@ -306,6 +306,10 @@ class Database:
         sql = "SELECT COUNT(*) FROM Stock"
         return await self.execute(sql, fetchval=True)
 
+    async def update_stock_telegram_id(self, new_telegram_id, old_telegram_id):
+        sql = "UPDATE Stock SET telegram_id=$1 WHERE telegram_id=$2"
+        return await self.execute(sql, new_telegram_id, old_telegram_id, execute=True)
+
     async def delete_stock(self):
         await self.execute("DELETE FROM Stock WHERE TRUE", execute=True)
 
