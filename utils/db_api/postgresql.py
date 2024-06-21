@@ -170,7 +170,7 @@ class Database:
     # IMEI Sell OUT
     async def imei_report(self):
 
-        today = datetime.now() - timedelta(days=0)
+        today = datetime.now() - timedelta(days=1)
         today_date = today.strftime('%Y-%m-%d')
         join_query = f"""
                 SELECT VBA.full_name, VBA.shop_name, VBA.employee_id, IMEI.IMEI, IMEI.Model, IMEI.Date_month, IMEI.Time_day 
@@ -252,6 +252,16 @@ class Database:
         ])
         return sql, tuple(parameters.values())
 
+    async def add_columns_to_stock(self, new_column: str):
+        # Ensure the column name is safe to insert into a query
+        column_name = new_column.replace(" ", "_").replace("/", "_")
+
+        # Prepare the SQL query to add the new column
+        sql = f"ALTER TABLE Stock ADD COLUMN IF NOT EXISTS {column_name} INTEGER NOT NULL DEFAULT 0;"
+
+        # Execute the SQL command
+        await self.execute(sql, execute=True)
+
     async def add_stock_vba(self, telegram_id, shop_name):
         sql = "INSERT INTO Stock(telegram_id, shop_name) VALUES($1, $2);"
         return await self.execute(sql, telegram_id, shop_name, fetchrow=True)
@@ -269,7 +279,7 @@ class Database:
             'V23', 'V23e', 'Y100', 'Y53S_6GB', 'Y53S_8GB', 'Y36',
             'Y35', 'Y33S_128GB', 'Y33S_64GB', 'Y27', 'Y27s', 'Y22',
             'Y17s_4_128', 'Y17s_6_128', 'Y16', 'Y15S', 'Y03_64GB', 'Y03_128GB',
-            'Y02T', 'X100'
+            'Y02T', 'X100', 'V30e', 'Y28_128GB', 'Y28_256GB', 'Y18'
         ]
 
         if model_name_edited not in allowed_columns:
@@ -290,7 +300,7 @@ class Database:
             'V23', 'V23e', 'Y100', 'Y53S_6GB', 'Y53S_8GB', 'Y36',
             'Y35', 'Y33S_128GB', 'Y33S_64GB', 'Y27', 'Y27s', 'Y22',
             'Y17s_4_128', 'Y17s_6_128', 'Y16', 'Y15S', 'Y03_64GB', 'Y03_128GB',
-            'Y02T', 'X100'
+            'Y02T', 'X100', 'V30e', 'Y28_128GB', 'Y28_256GB', 'Y18'
         ]
 
         if model_name not in allowed_columns:

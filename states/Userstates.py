@@ -34,6 +34,11 @@ class UpdateTelegramID(StatesGroup):
     newtelegramID = State()
 
 
+class AddModel(StatesGroup):
+    model = State()
+    confirmation = State()
+
+
 class StockCount(StatesGroup):
     start = State()
     confirmation = State()

@@ -2,9 +2,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import Command
 from aiogram import types
 from loader import db, dp, bot
-from states.Userstates import Sticker, AddVBAList, RemoveIMEI, UpdateTelegramID
+from states.Userstates import Sticker, AddVBAList, RemoveIMEI, UpdateTelegramID, AddModel
 from data.config import ADMINS
 from aiogram.types import InputFile
+from utils.send_report import ask_daily_stock_me
 
 from io import BytesIO
 import pandas as pd
@@ -186,6 +187,35 @@ async def search(message: types.Message):
         user_output.close()  # Close the BytesIO object
     else:
         await bot.send_message(chat_id=ADMINS[0], text="No IMEI :(")
+
+
+@dp.message_handler(Command(["add_stock_model"]), state='*', chat_id=ADMINS[0])
+async def add_model(message: types.Message):
+    await message.answer("Please enter new model in text")
+    await AddModel.model.set()
+
+
+@dp.message_handler(state=AddModel.model, content_types=types.ContentTypes.TEXT)
+async def add_model(message: types.Message, state: FSMContext):
+    model = str(message.text)
+    try:
+        await db.add_columns_to_stock(model)
+    except Exception as e:
+        await message.answer(f"Error : {e}")
+    else:
+        await message.answer(f"{model} was successfully added!")
+        await state.finish()
+
+
+@dp.message_handler(state=AddModel.model, content_types=types.ContentTypes.ANY)
+async def add_model(message: types.Message, state: FSMContext):
+    await message.answer("Please enter text only")
+
+
+@dp.message_handler(Command(["ask_daily_stock_me"]), state='*', chat_id=ADMINS[0])
+async def add_model(message: types.Message):
+    await ask_daily_stock_me()
+
 
 
 

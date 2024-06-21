@@ -173,7 +173,7 @@ async def phone_model_specific(call: types.CallbackQuery, state: FSMContext):
         imei = await db.select_imei(IMEI=data.get("IMEI"))
         msg = f"IMEI '{imei[1]}' already exists! Watch out for monkey business! \n\nTelegram ID: {imei[6]}"
         await bot.send_message(chat_id=ADMINS[0], text=msg)
-        await call.message.answer(f"Bu IMEI oldin kiritilgan. Qayta kiritish imkonsiz. \n\n@muhammadkodir_mahmudjanov ga aloqaga chiqing.")
+        await call.message.answer(f"Bu IMEI oldin kiritilgan. Qayta kiritish imkonsiz. \n\n@muhammadqodir_mahmudjanov ga aloqaga chiqing.")
         await state.finish()
     except Exception as e:
         await call.message.answer(f"Qandaydir xatolik yuz berdi. \n\nTahrirlash orqali qayta urinib ko'ring!", reply_markup=imei_confirmation.edit_keyboard)

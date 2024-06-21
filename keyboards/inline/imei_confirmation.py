@@ -52,9 +52,9 @@ modelX = InlineKeyboardMarkup(
 modelY = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton("Y02T", callback_data="Y02T"),
-            InlineKeyboardButton("Y03 64GB", callback_data="Y03 64GB"),
-            InlineKeyboardButton("Y03 128GB", callback_data="Y03 128GB"),
+            InlineKeyboardButton(text="Y02T", callback_data="Y02T"),
+            InlineKeyboardButton(text="Y03 64GB", callback_data="Y03 64GB"),
+            InlineKeyboardButton(text="Y03 128GB", callback_data="Y03 128GB"),
         ],
         [
             InlineKeyboardButton(text="Y15S", callback_data="Y15S"),
@@ -62,24 +62,28 @@ modelY = InlineKeyboardMarkup(
             InlineKeyboardButton("Y17s 4/128", callback_data="Y17s 4/128"),
         ],
         [
-            InlineKeyboardButton("Y17s 6/128", callback_data="Y17s 6/128"),
+            InlineKeyboardButton(text="Y17s 6/128", callback_data="Y17s 6/128"),
+            InlineKeyboardButton(text="Y18", callback_data="Y18"),
             InlineKeyboardButton(text="Y22", callback_data="Y22"),
-            InlineKeyboardButton(text="Y27", callback_data="Y27"),
-
         ],
         [
-            InlineKeyboardButton("Y27s", callback_data="Y27s"),
+            InlineKeyboardButton(text="Y27", callback_data="Y27"),
+            InlineKeyboardButton(text="Y27s", callback_data="Y27s"),
+            InlineKeyboardButton(text="Y28 128GB", callback_data="Y28 128GB"),
+        ],
+        [
+            InlineKeyboardButton(text="Y28 256GB", callback_data="Y28 256GB"),
             InlineKeyboardButton(text="Y33S 64GB", callback_data="Y33S 64GB"),
             InlineKeyboardButton(text="Y33S 128GB", callback_data="Y33S 128GB"),
         ],
         [
             InlineKeyboardButton(text="Y35", callback_data="Y35"),
-            InlineKeyboardButton("Y36", callback_data="Y36"),
+            InlineKeyboardButton(text="Y36", callback_data="Y36"),
             InlineKeyboardButton(text="Y53S 6GB", callback_data="Y53S 6GB"),
         ],
         [
             InlineKeyboardButton(text="Y53S 8GB", callback_data="Y53S 8GB"),
-            InlineKeyboardButton("Y100", callback_data="Y100"),
+            InlineKeyboardButton(text="Y100", callback_data="Y100"),
         ],
     ],
     row_width=4
@@ -90,6 +94,7 @@ modelV = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(text="V30", callback_data="V30"),
+            InlineKeyboardButton(text="V30e", callback_data="V30e"),
             InlineKeyboardButton(text="V29", callback_data="V29"),
             InlineKeyboardButton(text="V29e", callback_data="V29e"),
         ],
